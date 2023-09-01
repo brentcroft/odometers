@@ -1,7 +1,3 @@
-
-
-/**
-*/
 class Dial extends Array {
 
     constructor( label, symbols ) {
@@ -20,8 +16,6 @@ class Dial extends Array {
         return `${ this.label }:(${ this.join( ',' ) })`;
     }
 }
-
-// a sequence of Dial
 class Odometer extends Array {
 
     constructor( dials ) {
@@ -73,8 +67,6 @@ class Odometer extends Array {
     }
 }
 
-// each setting represents an index construction
-// on a box with n dimensions
 class FactorialOdometer extends Odometer {
     static FACTORIAL_DIALS = n => {
         const dials = [];
@@ -267,9 +259,7 @@ class FactorialBox extends AbstractBox {
     }
 }
 
-
 class Box extends AbstractBox {
-
     static boxes = {};
 
     static list() {
@@ -305,10 +295,8 @@ class Box extends AbstractBox {
     }
 
     static of( bases ) {
-//        const canonicalBases = [...bases].filter( b => b != 1 );
         const canonicalBases = [...bases];
         canonicalBases.sort( (a,b) => b - a );
-
         const key = canonicalBases.join( '.' );
         if (!( key in Box.boxes )) {
             const box = new Box( new Odometer( canonicalBases.map( (b,i) => new Dial( `${i}`, arrayOfIndexes( b ) ) ) ) );
@@ -356,8 +344,6 @@ class Box extends AbstractBox {
                     c.parity = arrayCompare( pl.perm, pr.perm ) > 0;
                     return c;
                 } ) );
-
-
             // assign inverses
             const inverseOf = ( idx ) => {
                 const index = new Array( idx.length );
@@ -366,7 +352,6 @@ class Box extends AbstractBox {
                 }
                 return index;
             };
-
             this.actionsCache.forEach( a0 => {
                 if (!Object.hasOwn( a0, 'inverse' )) {
                     const dix = inverseOf( a0.index );
@@ -401,7 +386,3 @@ class Box extends AbstractBox {
         } );
     }
 }
-
-
-
-//Box.of( [2, 3, 5, 7 ] ).testPermBox();
