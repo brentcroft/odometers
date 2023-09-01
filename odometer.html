@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+
+
+    <link rel="stylesheet" href="css/pagery.css">
+    <link rel="stylesheet" type="text/html" href="js/x3dom.css"/>
+    <script type="text/javascript" src="js/x3dom-full.js"></script>
+
+    <script type="text/javascript" src="js/nearley/moo.js"></script>
+    <script type="text/javascript" src="js/nearley/grammar.js"></script>
+    <script type="text/javascript" src="js/nearley/nearly.js"></script>
+
+    <script type="text/javascript" src="js/reify.js"></script>
+
+    <script type="text/javascript" src="js/3d.js"></script>
+    <script type="text/javascript" src="js/colors.js"></script>
+    <script type="text/javascript" src="js/cycles-x3dom.js"></script>
+
+    <script type="text/javascript" src="js/factors.js"></script>
+
+    <script type="text/javascript" src="js/odometer.js"></script>
+    <script type="text/javascript" src="js/odometer-dom.js"></script>
+    <script type="text/javascript" src="js/odometer-expression.js"></script>
+    <script type="text/javascript" src="js/expression-library.js"></script>
+
+    <script type="text/javascript" src="js/midi.js"></script>
+
+    <script>
+        function byId( id ) {
+            return document.getElementById(id);
+        }
+        function getMonomialFilter() {
+            if( byId( 'monomialFilterToggle' ).checked ) {
+                return JSON.parse( byId( 'monomialFilter' ).value || null );
+            }
+            return null;
+        }
+        function drawActionsTables() {
+            if ( byId('actionsTableToggle').checked ) {
+                byId( 'boxActions' ).appendChild( reify( 'hr' ) );
+                const actions = Box
+                        .list()
+                        .filter( box => box.actions().length > 0 )
+                        .flatMap( box => box.actions() );
+                byId( 'boxActions' )
+                    .appendChild( reify(
+                        'div',
+                        { 'class': 'expressionScriptResult' },
+                        [ cyclesDomNode( actions, 'Box Actions', getMonomialFilter(), byId( 'boxCycles' ) ) ]
+                    ) );
+            } else {
+                byId( 'boxActions' ).innerHTML = '';
+            }
+        }
+        function putActions( result ) {
+            const container = byId( 'expressionResults' );
+            container.innerHTML = '';
+            if (!result) {
+                container.appendChild( reify( 'pre', { 'class': 'expressionScriptError' }, [ reifyText( 'No result!' ) ] ) );
+            } else if ( result[0] instanceof Cycles ) {
+                container.appendChild( reify(
+                    'div',
+                    { 'class': 'expressionScriptResult' },
+                    [ cyclesDomNode( result, 'Expression Results', getMonomialFilter(), byId( 'boxCycles' ) ) ]
+                ) );
+                expressionResults
+                    .querySelectorAll( 'tr.default-selection' )
+                    .forEach( element => element.click() );
+
+                x3dom.reload();
+            } else {
+                container.appendChild( reify( 'pre', { 'class': 'expressionScriptError' }, [ reifyText( JSON.stringify( result ) ) ] ) );
+            }
+        }
+        function putComment( comment ) {
+            const container = byId( 'expressionResults' );
+            container.appendChild( reify( 'pre', { 'class': 'expressionScriptResult' }, [ reifyText( comment ), reify( 'br' ) ] ) );
+        }
+        function putError( message, error ) {
+            const container = byId( 'expressionResults' );
+            //container.appendChild( reify( 'pre', { 'class': 'expressionScriptError' }, [ reifyText( message ) ] ) );
+            container.appendChild( reify( 'pre', { 'class': 'expressionScriptResult' }, [ reifyText( error ) ] ) );
+            if ( error.stack ) {
+                container.appendChild( reify( 'pre', { 'class': 'expressionScriptResult' }, [ reifyText( error.stack ) ] ) );
+            }
+        }
+        function clearResults() {
+            expressionResults
+                .querySelectorAll( '.expressionScriptError' )
+                .forEach( element => element.parentNode.removeChild( element ) );
+            expressionResults
+                .querySelectorAll( '.expressionScriptResult' )
+                .forEach( element => element.parentNode.removeChild( element ) );
+            const boxActions = byId( 'boxActions' );
+            if ( boxActions ) {
+                boxActions.innerHTML = '';
+            }
+            Box.clear();
+        }
+
+        var calculatorTask = null;
+        var compileTask = null;
+        var evaluateTask = null;
+        var renderTask = null;
+
+        //const midi = new MidiKeyboard();
+        const midi = new MidiDrumKit( 200 );
+
+        function calculate( script ) {
+            if (calculatorTask) {
+                clearTimeout( calculatorTask );
+                //console.log( 'Cleared old calculator task.' );
+            }
+
+            const calculator = () => {
+                if ( byId( 'clearOnCalculate' ).checked ) {
+                    clearResults();
+                }
+
+                if (compileTask) {
+                    clearTimeout( compileTask );
+                    //console.log( 'Cleared old compile task.' );
+                }
+
+                const compiler = () => {
+                    try {
+                        if (evaluateTask) {
+                            clearTimeout( evaluateTask );
+                        }
+
+                        const operation = new CyclesExpression( byId( 'autoLabel' ).checked );
+                        const expressions = operation.compile( script );
+                        putComment( `Compiled ${ expressions.length } expressions.` );
+
+                        const evaluator = () => {
+                            try {
+                                if (renderTask) {
+                                    clearTimeout( renderTask );
+                                }
+
+                                const result = operation.evaluate( expressions );
+                                putComment( `Evaluated ${ result.length } results.` );
+
+                                const renderer = () => {
+                                    try {
+                                        putActions( result );
+                                    } catch ( e ) {
+                                        putError( 'Error rendering result', e );
+                                        throw e;
+                                    }
+                                };
+                                putComment( "Rendering..." );
+                                renderTask = setTimeout( renderer, 200 );
+
+                                const player = () => {
+                                    try {
+                                        const actions = [...result].reverse();
+                                        const tally = [...actions];
+
+                                        const playNextAction = () => {
+                                            const action = tally.pop();
+                                            if ( action ) {
+                                                setTimeout( playNextAction, midi.tick );
+                                                action
+                                                    .filter( cycle => cycle.length > 1 )
+                                                    .forEach( cycle => midi.playCycle( cycle ) )
+                                            } else if (byId('autoPlayRepeat').checked) {
+                                                tally.length = 0;
+                                                tally.push(...actions);
+                                                playNextAction();
+                                            }
+                                        };
+                                        playNextAction();
+                                    } catch ( e ) {
+                                        putError( 'Error playing result', e );
+                                        throw e;
+                                    }
+                                };
+
+                                if (byId('autoPlay').checked) {
+                                    playerTask = setTimeout( player, 200 );
+                                }
+                            } catch (e) {
+                                putError( 'Error evaluating script', e );
+                                throw e;
+                            }
+                        };
+                        putComment( "Calculating..." );
+                        evaluateTask = setTimeout( evaluator, 500 );
+                   } catch (e) {
+                        putError( 'Error compiling script', e );
+                        throw e;
+                   }
+                };
+                putComment( "Compiling..." );
+                compileTask = setTimeout( compiler, 300 );
+            };
+            calculatorTask = setTimeout( calculator, 200 );
+        }
+
+        function calculateNow() {
+            calculate( byId( 'expressionScript' ).value );
+            drawActionsTables();
+        }
+        function autoCalc() {
+            if ( byId('autoCalc').checked ) {
+                calculateNow();
+            }
+        }
+
+        function renderExpressionLibraryLinks() {
+            const expressionScript = byId('expressionScript');
+            byId( 'expressionsLibrary' ).appendChild(
+                reify( 'label', { 'class': 'columnSelector' },[
+                    reifyText( 'library: ' ),
+                    reify(
+                        'select',
+                        { 'id': 'expressionSelector', 'name': 'expressionSelector', 'title': 'expressionSelector' },
+                        Object
+                            .keys( expressionLibrary )
+                            .map( key => reify( 'option', { 'value': key }, [ reifyText( key ) ] ) ),
+                        [
+                            c => c.onchange = (event) => {
+                                const key = c[c.selectedIndex].value;
+                                const group = expressionLibrary[key];
+                                expressionScript.innerHTML = '# ' + key + '\n' + group.join('\n');
+                                setTimeout( calculateNow, 50);
+                            }
+                        ]
+                    )
+                   ]
+                )
+            );
+        }
+
+        function selectScript(scriptKey) {
+            setTimeout( () => {
+                const expressionSelector = byId('expressionSelector');
+                const option = Array
+                    .from(expressionSelector.options)
+                    .find( option => option.text === scriptKey );
+                if (option) {
+                    expressionSelector.value = option.value;
+                    expressionSelector.onchange( { source: expressionSelector } );
+                }
+            }, 200 );
+        }
+    </script>
+    <title>Odometers</title>
+</head>
+<body onload="renderExpressionLibraryLinks(); selectScript('default')">
+    | <label class="columnSelector">expressions:<input type="checkbox" checked="checked" id="expressionPanelToggle" onclick="showHide( 'expressionScriptLabel', this );"/></label>
+    | <label class="columnSelector">boxes:<input type="checkbox" id="actionsTableToggle" onclick="showHide( 'boxActions', this );drawActionsTables()"/></label>
+    <label  style="display: none" class="columnSelector">clear on calculate:<input type="checkbox" checked="checked" id="clearOnCalculate"/></label>
+    | <label class="columnSelector">auto-calc:<input type="checkbox" checked="checked" id="autoCalc" onclick="autoCalc()"/></label>
+    | <label class="columnSelector">auto-label:<input type="checkbox" id="autoLabel" onclick="autoCalc()"/></label>
+    | <label class="columnSelector">auto-play:<input type="checkbox" id="autoPlay" onclick="autoCalc()"/></label>
+    | <label class="columnSelector">auto-play-loop:<input type="checkbox" id="autoPlayRepeat"/></label>
+    | <span id="expressionsLibrary"></span>
+    | <label class="columnSelector" for="monomialFilterToggle"><span id="monomialFilterDisplay"></span>:<input type="checkbox" id="monomialFilterToggle" onclick="calculateNow()">
+        <input type="hidden" id="monomialFilter">
+    </label>
+
+    <hr/>
+
+    <label for="expressionScript" id="expressionScriptLabel">
+        <textarea id="expressionScript" class="expression" oninput="autoCalc()"></textarea>
+    </label>
+    <div id="expressionResults"></div>
+
+    <div id="boxActions" style="display: none"></div>
+</body>
+</html>
