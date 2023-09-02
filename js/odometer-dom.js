@@ -63,7 +63,7 @@ Cycles.prototype.htmlSummary = function() {
          this.htmlMonomial()
       ] );
 };
-Cycles.prototype.htmlTableColumns = [ 'orbit', 'id-sum', 'coords', 'coords-sum', 'order', 'per2', 'rad', 'polynomials' ];
+Cycles.prototype.htmlTableColumns = [ 'orbit', 'id-sum', 'coords-sum', 'order', 'per2', 'rad', 'polynomials' ];
 Cycles.prototype.htmlTableDiagramOptions = [ 'show', 'lines', 'grid', 'centres' ];
 Cycles.prototype.htmlTable = function() {
 
