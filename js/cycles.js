@@ -1,175 +1,6 @@
-
-function cycles( source ) {
-    const ri = [...source.index];
-    const cycles = new Cycles();
-    cycles.key = source.key;
-    cycles.name = source.name;
-    cycles.permPair = source.sources;
-    cycles.box = source.box;
-    //cycles.parity = source.parity;
-    for ( var i = 0; i < ri.length; i++ ) {
-        const startId = i;
-        var nextId = ri[startId];
-        if (nextId < 0) {
-            continue;
-        }
-        const cycle = new Cycle();
-        cycle.push( startId );
-        ri[startId] = -1;
-        while ( nextId != startId ) {
-            cycle.push( nextId );
-            const lastId = nextId;
-            nextId = ri[ lastId ];
-            if (nextId < 0) {
-                throw new Error( `Index does not contain next id: ${ lastId }` );
-            } else {
-                ri[lastId] = -1;
-            }
-        }
-        cycle.stats = {};
-        cycles.push( cycle );
-    };
-    cycles.index = [...source.index];
-    cycles.canonicalize();
-    return cycles;
-}
-
-
-function inverse( source ) {
-    const key = `${ source.key }^-1`;
-    const idx = source.index;
-    const index = new Array( idx.length );
-    for ( var i = 0; i < idx.length; i++ ) {
-        index[i] = idx.indexOf(i);
-    }
-    return cycles( {
-        'index': index,
-        'key': key,
-        'box': source.box
-    } );
-}
-
-function collapseBrokenCycleInIndex( c, index ) {
-    const items = [ c ];
-    var x = index.indexOf( c );
-    while (x >= 0) {
-        if (x == c) {
-            console.log(`Not a broken cycle: ${ items }`);
-            return;
-        }
-        items.push( x );
-        x = index.indexOf( x );
-    }
-    items.forEach( i => index[i] = i);
-}
-
-function sanitiseCycles(index) {
-    const l = index.length;
-    for (var i = 0; i < l; i++ ) {
-        if (index[i] >= l ) {
-            collapseBrokenCycleInIndex(i, index);
-        }
-    }
-}
-
-function compose( leftSource, rightSource, twist = false, box ) {
-    const ri = rightSource.index;
-    const li = leftSource.index;
-    const key = `${ maybeBracket( leftSource.key ) }${ twist ? ':' : '*' }${ maybeBracket( rightSource.key ) }`;
-    const l = ri.length;
-    if (l != li.length) {
-        throw new Error(`Cannot compose indexes of different lengths: ${ key }`);
-    }
-    const index = new Array( ri.length );
-    for ( var i = 0; i < ri.length; i++ ) {
-        var nextId = twist ? ri.indexOf(i) : ri[i];
-        index[i] = li[nextId] % ri.length;
-    }
-    return cycles( { 'index': index, 'key': key, 'box': box } );
-}
-
-function product( leftSource, rightSource, twist = false, box ) {
-    const ri = rightSource.index;
-    const li = leftSource.index;
-    const index = [];
-    for ( var i = 0; i < ri.length; i++ ) {
-        const nextOffset = twist
-            ? ri.indexOf(i) * li.length
-            : ri[i] * li.length;
-        const x = li.map( j => j + nextOffset );
-        index.push( ...x );
-    };
-    return cycles( {
-        'index': index ,
-        'key': `${ maybeBracket( leftSource.key ) }${ twist ? '~' : '|' }${ maybeBracket( rightSource.key ) }`,
-        'box': box
-    } );
-}
-
-function reduce( leftSource, rightSource, twist = false, box ) {
-    const ri = rightSource.index;
-    const li = leftSource.index;
-    const l = li.length / ri.length;
-    const key = `${ maybeBracket( leftSource.key ) }${ twist ? '/' : '/' }${ maybeBracket( rightSource.key ) }`;
-    if (!Number.isInteger(l)) {
-        throw new Error(`Cannot divide index of size ${li.length} by ${ ri.length }; calculating ${ key }`);
-    }
-    const indexes = [];
-    for ( var i = 0; i < ri.length; i++ ) {
-        const nextOffset = (i * l);
-        const x = li.slice(nextOffset, l + nextOffset).map( v => v % l );
-        if ( !indexes.find( a => arrayExactlyEquals(a,x) ) ) {
-            indexes.push( x );
-        }
-    }
-    if (indexes.length != 1 ) {
-        throw new Error(`Different parts returned from division; calculating ${ key }\n${ indexes.map( (idx,i) => i + ': [' + idx + ']' ).join('\n') }`);
-    }
-    return cycles( {
-        'index': indexes[0],
-        'key': key,
-        'box': Box.of( [ l ] )
-    } );
-}
-
-function truncate( leftSource, rightSource, twist = false, box ) {
-    const ri = rightSource.index;
-    const l = ri.length;
-    const li = leftSource.index.slice(0, l);
-    for (var i = 0; i < l; i++ ) {
-        if (li[i] >= l ) {
-            collapseBrokenCycleInIndex(i, li);
-        }
-    }
-    return cycles( {
-        'index': li ,
-        'key': `${ maybeBracket( leftSource.key ) }${ twist ? '%' : '%' }${ maybeBracket( rightSource.key ) }`,
-        'box': Box.of( [ l ] )
-    } );
-}
-
-
 class Cycle extends Array {
-
     constructor() {
         super( arguments.length > 0 && Number.isInteger( arguments[0] ) ? arguments[0] : 0 );
-    }
-
-    indexOfCoord( coord ) {
-        for ( var i = 0; i < this.length; i++ ) {
-            if ( arrayExactlyEquals( this[i], coord ) ) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    previous( i ) {
-        return this[ ( i + this.length - 1 ) % this.length ];
-    }
-
-    next( i ) {
-        return this[ ( i + 1 ) % this.length ];
     }
 
     getStats( points ) {
@@ -177,32 +8,25 @@ class Cycle extends Array {
             return this.$stats;
         }
         const rank = points[0].length;
-
         const order = this.length;
         const centre = new Array( rank ).fill( 0 );
         const coordsSum = new Array( rank ).fill( 0 );
-
         this
             .map( index => points[index] )
             .filter( coord => coord )
             .forEach( coord => coord.forEach( (c,i) => coordsSum[i] += c ) );
-
         centre
             .forEach( ( s, i ) => {
                 centre[i] = s / order;
             } );
-
         const indexPerimeter = this
             .map( (index,i) => this[ ( i + 1 ) % order ] - index )
             .map( jump => Math.abs( jump ) )
             .reduce( (a,c) => a + c, 0 );
-
         const euclideanPerimeter = this
             .map( (index,i) => distance2( points[index], points[ this[ ( i + 1 ) % order ] ] ) )
             .reduce( (a,c) => a + c, 0 );
-
         const idSum = this.reduce( (a,index) => a + index, 0 );
-
         this.$stats = {
             order: order,
             centre: centre,
@@ -216,116 +40,40 @@ class Cycle extends Array {
         return this.$stats;
     }
 
-    equations( cycles ) {
-        const equations  = [];
-        const bases = [...cycles.box.odometer.bases];
-        const dimension = bases.length;
-        const order = cycles.order();
-        const cyclesParity = cycles.parity();
-        const terminal = BigInt(cycles.box.volume - 1);
-
-        bases.forEach( (base, bI) => {
-
-            const baseIndex = bI;//(bases.length -1 - bI);
-
-            const fixedFactor = cycles.C()[baseIndex];
-            const cIsInt = true;
-
-            // the coefficients formed by picking a place from each underlying point
-            const cycleCoefficients = this.map( id => cycles.box[ id ][baseIndex] );
-            if (cycleCoefficients) {
-
-                const factor = BigInt(this[cyclesParity[0] == 0 ? (this.length - 1) : 0]);
-
-                if ((baseIndex % 2) == cyclesParity[0]) {
-                    cycleCoefficients.reverse();
-                }
-
-                const coefficients = [];
-                const repeats = order / this.length;
-                for (var i = 0; i < repeats; i++) {
-                    coefficients.push(...cycleCoefficients);
-                }
-                var acc = BigInt(0);
-                var placeValue = BigInt(1);
-                var error = null;
-
-                try {
-                    coefficients.forEach( (coefficient, place) => {
-                        acc = acc + BigInt(coefficient) * placeValue;
-                        if (acc > MAX_SAFE_INT) {
-                            throw new Error( 'Exceeded MAX_SAFE_INT' );
-                        }
-                        placeValue = placeValue * BigInt(base);
-                    } );
-
-                    if (dimension == 1 && fixedFactor > 0) {
-                        error = (acc / fixedFactor);
-                        error = (error / factor);
-                        if (error == 1) {
-                            error = null;
-                        }
-                    } else if ( cIsInt && fixedFactor > 0) {
-                        error = (acc / fixedFactor);
-                        error = (error / factor);
-                        if (error == 1) {
-                            error = null;
-                        }
-                    } else {
-                        error = 'uf';
-                    }
-                } catch (e) {
-                    console.log(e);
-                    error = e.message;
-                }
-
-                const reverseCoefficients = true;
-                if (reverseCoefficients) {
-                    coefficients.reverse();
-                }
-
-                equations.push( {
+    htmlEquations( cycles ) {
+        return reify(
+            "table",
+            { 'class': 'polynomials' },
+            cycleEquations( cycles, this ).map( (
+                {
                     'acc': acc,
                     'base': base,
-                    'coeffs': coefficients,
+                    'coeffs': coeffs,
                     'factor': factor,
                     'fixedFactor': fixedFactor,
                     'error': error,
-                    'terminal': terminal } );
-            } else {
-                console.log( `No cycle coordinates: ${ this }` );
-            }
-        } );
-
-        return equations;
-    }
-    htmlEquations( cycles ) {
-        return reify(
-            "span",
-            { 'class': 'equation' },
-            this.equations( cycles )
-                .flatMap( (
-                    {
-                        'acc': acc,
-                        'base': base,
-                        'coeffs': coeffs,
-                        'factor': factor,
-                        'fixedFactor': fixedFactor,
-                        'error': error,
-                        'terminal': terminal
-                    } ) => [
-                    ...coeffs.flatMap( (c,i) => [
-                        reify( "b", {}, [ base > 10 ? reifyText( '&emsp14;' ) : null, reifyText( `${ c }` ) ] ),
+                    'terminal': terminal
+                } ) => reify( 'tr', { 'class' : 'polynomials' } , [
+                    reify( 'td', { 'class' : 'polynomials' } , [
+                        ...coeffs.flatMap( (c,i) => [ reify( "b", {}, [ base > 10 ? reifyText( '&emsp14;' ) : null, reifyText( `${ c }` ) ] ) ] ),
+                        reify( "sub", {}, [ reifyText( `${ base }` ) ] )
                     ] ),
-                    reify( "sub", {}, [ reifyText( `${ base }` ) ] ),
-                    reify( "b", {}, [ reifyText( ` = ${ acc } ` ) ] ),
-                    reify( "i", {}, [
-                        error
-                            ? reify( "span", { 'class': 'mgEqn' }, [ reifyText( `(${ terminal } x ${ acc / terminal })` ) ] )
-                            : reifyText( ` (${ factor } x ${ fixedFactor })` ),
-                    ] ),
-                    reify( "br" )
-                ] ) );
+                    reify( 'td', { 'class' : 'polynomials' } , [ reifyText( ' = ' ) ] ),
+                    reify( 'td', { 'class' : 'polynomials' } , [
+                        reifyText( `${ acc } ` ),
+                        reify( "i", {}, [
+                            'uf' == error
+                                ? reify( "span", { 'class': 'uf' }, [ reifyText( '(uf)' ) ] )
+                                : 'fixedFactor' == error
+                                    ? reify( "span", { 'class': 'fixedFactor' }, [ reifyText( `(${ acc / fixedFactor } x ${ fixedFactor })` ) ] )
+                                    : 'factor' == error
+                                        ? reify( "span", { 'class': 'factor' }, [ reifyText( `(${ factor } x ${ acc / factor })` ) ] )
+                                        : reifyText( ` (${ factor } x ${ fixedFactor })` ),
+                        ] )
+                    ] )
+                ] )
+            )
+        );
     }
 }
 
@@ -365,29 +113,28 @@ class Cycles extends Array {
 
     C() {
         if (!Object.hasOwn( this, '$C')) {
-            const C = [];
-            const order = this.order();
-            const terminalCoords = this.getTerminal();
-            const bases = this.box.odometer.bases;
-            const factor = BigInt(this.box.length - 1);
-
-            bases.forEach( (base, bI) => {
-
-                const baseIndex = bI; //(bases.length -1 - bI);
-                const terminalCoord = terminalCoords[baseIndex];
-                const coeffs = [];
-                for (var i = 0; i < order; i++) {
-                    coeffs.push( terminalCoord );
-                }
-                var acc1 = BigInt(0);
-                var basePower1 = BigInt(1);
-                coeffs.forEach( (coeff, place) => {
-                    acc1 = acc1 + (BigInt(coeff) * basePower1);
-                    basePower1 = basePower1 * BigInt(base);
-                } );
-                C.push( acc1 / factor );
-            } );
-            this.$C = C;
+//            const C = [];
+//            const order = this.order();
+//            const terminalCoords = this.getTerminal();
+//            const bases = this.box.odometer.bases;
+//            const factor = BigNumber(this.box.length - 1);
+//            bases.forEach( (base, bI) => {
+//                const baseIndex = bI; //(bases.length -1 - bI);
+//                const bnb = BigNumber(base);
+//                const terminalCoord = terminalCoords[baseIndex];
+//                const coeffs = [];
+//                for (var i = 0; i < order; i++) {
+//                    coeffs.push( terminalCoord );
+//                }
+//                var acc1 = BigNumber(0);
+//                var basePower1 = BigNumber(1);
+//                coeffs.forEach( (coeff, place) => {
+//                    acc1 = acc1.plus( basePower1.multipliedBy(coeff) );
+//                    basePower1 = basePower1.multipliedBy(bnb);
+//                } );
+//                C.push( acc1.dividedBy( factor ) );
+//            } );
+            this.$C = terminalPolynomials( this.order(), this.box.odometer.bases ).map( tp => tp.dividedBy( this.box.length - 1 ));
         }
         return this.$C;
     }

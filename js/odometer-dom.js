@@ -63,13 +63,13 @@ Cycles.prototype.htmlSummary = function() {
          this.htmlMonomial()
       ] );
 };
-Cycles.prototype.htmlTableColumns = [ 'orbit', 'id-sum', 'coords', 'coords-sum', 'order', 'per2', 'rad', 'eqn' ];
-Cycles.prototype.htmlTableDiagramOptions = [ 'lines', 'grid', 'centres' ];
+Cycles.prototype.htmlTableColumns = [ 'orbit', 'id-sum', 'coords', 'coords-sum', 'order', 'per2', 'rad', 'polynomials' ];
+Cycles.prototype.htmlTableDiagramOptions = [ 'show', 'lines', 'grid', 'centres' ];
 Cycles.prototype.htmlTable = function() {
 
-    const allColumns = [ 'orbit', 'id-sum', 'coords', 'coords-sum', 'order', 'per2', 'rad', 'eqn' ];
+    const allColumns = [ 'orbit', 'id-sum', 'coords', 'coords-sum', 'order', 'per2', 'rad', 'polynomials' ];
     const columns = [ '#', ...arrayIntersection( allColumns, this.htmlTableColumns ) ];
-    const maybeDisplay = (label, domFn) => this.htmlTableColumns.includes( label ) ? domFn() : null;
+    const maybeDisplay = (label, domFn, clearFn) => this.htmlTableColumns.includes( label ) ? domFn() : clearFn ? clearFn() : null;
 
     const bases = this.getBases();
     const volume = this.getVolume();
@@ -135,7 +135,7 @@ Cycles.prototype.htmlTable = function() {
         maybeDisplay( 'order', () => reifyText( `<code>1</code>` ) ),
         maybeDisplay( 'per2', () => reifyText( `<code>0</code>` ) ),
         maybeDisplay( 'rad', () => reifyText( `<code>0</code>` ) ),
-        maybeDisplay( 'eqn', () => identities[identities.length-1].htmlEquations( this ) ),
+        maybeDisplay( 'polynomials', () => identities[identities.length-1].htmlEquations( this ) ),
     ].filter( h => h );
 
     const totals = this.getStats();
@@ -149,7 +149,7 @@ Cycles.prototype.htmlTable = function() {
         maybeDisplay( 'order', () => reifyText( `<code>${ this.order() }</code>`, { 'class': 'sum-total' } ) ),
         maybeDisplay( 'per2', () => reifyText( `<code>${ totals.euclideanPerimeter }</code>`, { 'class': 'sum-total' } ) ),
         maybeDisplay( 'rad', () => reifyText( `<code>${ totals.indexPerimeter }</code>`, { 'class': 'sum-total' } ) ),
-        maybeDisplay( 'eqn', () => reifyText( '' ) )
+        maybeDisplay( 'polynomials', () => reifyText( '' ) )
     ].filter(h => h );
 
 
@@ -174,7 +174,7 @@ Cycles.prototype.htmlTable = function() {
                         maybeDisplay( 'order', () => reify( "td", {}, [ reifyText( `${ orbit.length }` ) ] ) ),
                         maybeDisplay( 'per2', () => reify( "td", {}, [ reifyText( `${ stats.euclideanPerimeter }` ) ] ) ),
                         maybeDisplay( 'rad', () => reify( "td", {}, [ reifyText( `${ stats.indexPerimeter }` ) ] ) ),
-                        maybeDisplay( 'eqn', () => reify( "td", {}, [ orbit.htmlEquations( this ) ] ) )
+                        maybeDisplay( 'polynomials', () => reify( "td", {}, [ orbit.htmlEquations( this ) ] ) )
                     ],
                     [ c => c.onclick = onRowSelectionFactory( c ) ]
             ) ),
@@ -205,15 +205,18 @@ Cycles.prototype.htmlTable = function() {
             ] )
         ] ) );
 
-    const allDiagramOptions = [ '3d', 'lines', 'grid', 'centres', 'plane' ];
+    const allDiagramOptions = [ 'show', '3d', 'lines', 'grid', 'centres', 'plane' ];
     const diagramOptions = arrayIntersection( allDiagramOptions, this.htmlTableDiagramOptions );
     const replaceDiagram = () => {
         diagramContainer.innerHTML = '';
-        diagramContainer.appendChild(
-            diagramOptions.includes( '3d' )
-                ? this.x3dBoxes( param = { 'toggles': diagramOptions }, view = 'default' )
-                : this.x3dCycles( param = { 'toggles': diagramOptions }, view = 'default' )
-        );
+        if (diagramOptions.includes('show')) {
+            diagramContainer.appendChild(
+                diagramOptions.includes( '3d' )
+                    ? this.x3dBoxes( param = { 'toggles': diagramOptions }, view = 'default' )
+                    : this.x3dCycles( param = { 'toggles': diagramOptions }, view = 'default' )
+            );
+            x3dom.reload();
+        }
     };
     const diagramOptionsSelectors = allDiagramOptions
         .map( (diagramOption,i) => reify( 'label', { 'class': 'columnSelector' }, [
@@ -223,18 +226,12 @@ Cycles.prototype.htmlTable = function() {
                 c => c.onchange = () => {
                     if ( !c.checked && this.htmlTableDiagramOptions.includes( diagramOption ) ) {
                         this.htmlTableDiagramOptions.splice( this.htmlTableDiagramOptions.indexOf(diagramOption), 1 );
-                        diagramOptions.length = 0;
-                        diagramOptions.push( ...arrayIntersection( allDiagramOptions, this.htmlTableDiagramOptions ) );
-                        replaceDiagram();
-                        x3dom.reload();
-
                     } else if ( c.checked && !this.htmlTableDiagramOptions.includes( diagramOption ) ) {
                         this.htmlTableDiagramOptions.push( diagramOption );
-                        diagramOptions.length = 0;
-                        diagramOptions.push( ...arrayIntersection( allDiagramOptions, this.htmlTableDiagramOptions ) );
-                        replaceDiagram();
-                        x3dom.reload();
                     }
+                    diagramOptions.length = 0;
+                    diagramOptions.push( ...arrayIntersection( allDiagramOptions, this.htmlTableDiagramOptions ) );
+                    replaceDiagram();
                 }
             ] )
         ] ) );
@@ -259,8 +256,9 @@ Cycles.prototype.htmlTable = function() {
             ...diagramOptionsSelectors
         ] ),
 
-        diagramContainer,
-        diagramLegend,
+        diagramOptions.includes( 'show') ? diagramContainer : null,
+        diagramOptions.includes( 'show') ? diagramLegend : null,
+
         reify( 'div', {}, [
             reify( 'label', { 'class': 'columnSelector' }, [ reifyText( 'columns: ' ) ] ),
             ...columnSelectors
@@ -389,7 +387,7 @@ function cyclesDomNode( actions, caption = null, monomialFilter = null ) {
         'per2',
         'rad',
         'index',
-        'cycles'
+        'cycles',
     ];
     const columns = [ '#', ...arrayIntersection( allColumns, actionsHtmlTableColumns ) ];
 
