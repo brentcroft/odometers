@@ -1,4 +1,40 @@
 
+function byId( id ) {
+    return document.getElementById(id);
+}
+
+function showHideCSS( selector ) {
+    document
+        .querySelectorAll( selector )
+        .forEach( c => {
+            var s = c.style.display;
+            if ( s == '' ) {
+                c.style.display  =  'none';
+            } else {
+                c.style.display  =  '';
+            }
+        } );
+}
+
+function showHide( id, control ) {
+    const force = control ? control.checked ? 1 : -1 : 0;
+    var c = document.getElementById( id );
+    if ( c ) {
+        var s = c.style.display;
+        if ( ( force && force != -1 ) || s != '' ) {
+            c.style.display  =  '';
+        } else {
+            c.style.display  =  'none';
+        }
+    }
+}
+
+function showHideAll( ids = [], control ) {
+    ids.forEach( id => showHide( id, control ) );
+}
+
+
+
 /**
     reify the data to a new document element of type tag
 */

@@ -33,9 +33,7 @@
     <script type="text/javascript" src="js/midi.js"></script>
 
     <script>
-        function byId( id ) {
-            return document.getElementById(id);
-        }
+
         function getMonomialFilter() {
             if( byId( 'monomialFilterToggle' ).checked ) {
                 return JSON.parse( byId( 'monomialFilter' ).value || null );
@@ -109,9 +107,20 @@
         var compileTask = null;
         var evaluateTask = null;
         var renderTask = null;
+        var midi = null;
 
-        //const midi = new MidiKeyboard();
-        const midi = new MidiDrumKit( 200 );
+        const getMidi = () => {
+            try {
+                const element = byId( 'midiTick' );
+                const value = element.value;
+                const tick = parseInt( value );
+                return new MidiDrumKit( tick );
+                //return new MidiKeyboard( tick );
+            } catch (e) {
+                console.log(e);
+            }
+        };
+
 
         function calculate( script ) {
             if (calculatorTask) {
@@ -184,7 +193,7 @@
                                     }
                                 };
 
-                                if (byId('autoPlay').checked) {
+                                if (byId('midi').checked && byId('autoPlay').checked) {
                                     playerTask = setTimeout( player, 200 );
                                 }
                             } catch (e) {
@@ -211,6 +220,10 @@
         }
         function autoCalc() {
             if ( byId('autoCalc').checked ) {
+                if (byId('midi').checked) {
+                    midi = getMidi();
+                }
+
                 calculateNow();
             }
         }
@@ -261,12 +274,17 @@
     <label  style="display: none" class="columnSelector">clear on calculate:<input type="checkbox" checked="checked" id="clearOnCalculate"/></label>
     | <label class="columnSelector">auto-calc:<input type="checkbox" checked="checked" id="autoCalc" onclick="autoCalc()"/></label>
     | <label class="columnSelector">auto-label:<input type="checkbox" id="autoLabel" onclick="autoCalc()"/></label>
-    | <label class="columnSelector">auto-play:<input type="checkbox" id="autoPlay" onclick="autoCalc()"/></label>
-    | <label class="columnSelector">auto-play-loop:<input type="checkbox" id="autoPlayRepeat"/></label>
+    | <label class="columnSelector">midi:<input type="checkbox" id="midi" onclick="showHide('midiControls', this)"/></label>
     | <span id="expressionsLibrary"></span>
     | <label class="columnSelector" for="monomialFilterToggle"><span id="monomialFilterDisplay"></span>:<input type="checkbox" id="monomialFilterToggle" onclick="calculateNow()">
         <input type="hidden" id="monomialFilter">
     </label>
+    <div id="midiControls" style="display: none">
+        <hr/>
+        <label class="columnSelector">auto-play:<input type="checkbox" id="autoPlay" onclick="autoCalc()"/></label>
+        | <label class="columnSelector">auto-play-loop:<input type="checkbox" id="autoPlayRepeat"/></label>
+        | <label class="columnSelector">tick:<input type="number" id="midiTick" value="200" min="10" step="10"/></label>
+    </div>
 
     <hr/>
 
