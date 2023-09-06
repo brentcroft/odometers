@@ -67,7 +67,7 @@ Cycles.prototype.htmlSummary = function() {
          this.htmlMonomial()
       ] );
 };
-Cycles.prototype.htmlTableColumns = [ 'orbit', 'id-sum', 'coords-sum', 'order', 'per2', 'rad', 'polynomials' ];
+Cycles.prototype.htmlTableColumns = [ 'rotate', 'orbit', 'id-sum', 'coords-sum', 'order', 'per2', 'rad', 'polynomials' ];
 Cycles.prototype.htmlTableDiagramOptions = [ 'show', 'lines', 'grid', 'centres' ];
 Cycles.prototype.htmlTable = function() {
 
@@ -162,8 +162,9 @@ Cycles.prototype.htmlTable = function() {
     const cellsRenderer = ( orbit, stats, i ) => [
         reify( "td", {}, [ reify( "sup", {}, [ reifyText( `${ i + 1 }` ) ] ) ] ),
         maybeDisplay( 'rotate', () => reify( "td", {}, [
-            reify('b', {}, [ reifyText( ' &larr; ' ) ], [ c => c.onclick = rotateOrbit( orbit, stats, i, 1 ) ] ),
-            reify('b', {}, [ reifyText( ' &rarr; ' ) ], [ c => c.onclick = rotateOrbit( orbit, stats, i, -1 ) ] )
+            reify('b', { 'class': 'control' }, [ reifyText( '&larr;' ) ], [ c => c.onclick = rotateOrbit( orbit, stats, i, 1 ) ] ),
+            reifyText( '&nbsp;&nbsp;&nbsp;&nbsp;' ),
+            reify('b', { 'class': 'control' }, [ reifyText( '&rarr;' ) ], [ c => c.onclick = rotateOrbit( orbit, stats, i, -1 ) ] ),
         ] ) ),
         maybeDisplay( 'orbit', () => reify( "td", { cssClass: [ 'orbit' ] }, [ reifyText( `(${ orbit })` ) ] ) ),
         maybeDisplay( 'id-sum', () => reify( "td", {}, [ reifyText( `${ stats.idSum }` ) ] ) ),

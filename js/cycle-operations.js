@@ -6,7 +6,6 @@ function cycles( source ) {
     cycles.name = source.name;
     cycles.permPair = source.sources;
     cycles.box = source.box;
-    //cycles.parity = source.parity;
     for ( var i = 0; i < ri.length; i++ ) {
         const startId = i;
         var nextId = ri[startId];

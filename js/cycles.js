@@ -140,7 +140,7 @@ class Cycles extends Array {
         try {
             return this.permPair[0];
         } catch ( e ) {
-            return [1];
+            return [0];
         }
     }
 

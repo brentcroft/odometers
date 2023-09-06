@@ -1,6 +1,4 @@
 
-
-
 class CyclesExpression {
 
     static COMPILED_GRAMMAR = nearley.Grammar.fromCompiled( grammar );

@@ -73,6 +73,12 @@ tr.polynomials { background: white; }
     background: tomato;
 }
 
+.control {
+    color: black;
+    padding: 2px;
+    border-radius: 3px;
+    border: 1px solid black;
+}
 
 
 .cycles-text {
