@@ -3,10 +3,6 @@ class Cycle extends Array {
         super( arguments.length > 0 && Number.isInteger( arguments[0] ) ? arguments[0] : 0 );
     }
 
-    rotate() {
-        rotateArray(this, 1);
-    }
-
     getStats( points ) {
         if ( Object.hasOwn( this, '$stats' ) ) {
             return this.$stats;
