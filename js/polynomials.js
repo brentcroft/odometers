@@ -4,16 +4,17 @@
 */
 function terminalPolynomials( order, bases ) {
     const C = [];
-    bases.forEach( base => {
-        const coefficients = new Array(order).fill( base - 1 );
-        var accumulate = BigNumber(0);
-        var placePower = BigNumber(1);
-        coefficients.forEach( coefficient => {
-            accumulate = accumulate.plus( placePower.multipliedBy( coefficient ) );
-            placePower = placePower.multipliedBy( base );
+
+        bases.forEach( base => {
+            const coefficients = new Array(order).fill( base - 1 );
+            var accumulate = BigNumber(0);
+            var placePower = BigNumber(1);
+            coefficients.forEach( coefficient => {
+                accumulate = accumulate.plus( placePower.multipliedBy( coefficient ) );
+                placePower = placePower.multipliedBy( base );
+            } );
+            C.push( accumulate );
         } );
-        C.push( accumulate );
-    } );
     return C;
 }
 
@@ -25,9 +26,7 @@ function cycleEquations( cycles, cycle ) {
     const cyclesParity = cycles.parity();
     const terminal = BigNumber(cycles.box.volume - 1);
 
-    bases.forEach( (base, bI) => {
-
-        const baseIndex = bI;//(bases.length -1 - bI);
+    bases.forEach( (base, baseIndex) => {
 
         const fixedFactor = cycles.C()[baseIndex];
         const cIsInt = fixedFactor.isInteger();

@@ -3,6 +3,10 @@ class Cycle extends Array {
         super( arguments.length > 0 && Number.isInteger( arguments[0] ) ? arguments[0] : 0 );
     }
 
+    rotate() {
+        rotateArray(this, 1);
+    }
+
     getStats( points ) {
         if ( Object.hasOwn( this, '$stats' ) ) {
             return this.$stats;
@@ -38,42 +42,6 @@ class Cycle extends Array {
             euclideanPerimeter: euclideanPerimeter
         };
         return this.$stats;
-    }
-
-    htmlEquations( cycles ) {
-        return reify(
-            "table",
-            { 'class': 'polynomials' },
-            cycleEquations( cycles, this ).map( (
-                {
-                    'acc': acc,
-                    'base': base,
-                    'coeffs': coeffs,
-                    'factor': factor,
-                    'fixedFactor': fixedFactor,
-                    'error': error,
-                    'terminal': terminal
-                } ) => reify( 'tr', { 'class' : 'polynomials' } , [
-                    reify( 'td', { 'class' : 'polynomials' } , [
-                        ...coeffs.flatMap( (c,i) => [ reify( "b", {}, [ base > 10 ? reifyText( '&emsp14;' ) : null, reifyText( `${ c }` ) ] ) ] ),
-                        reify( "sub", {}, [ reifyText( `${ base }` ) ] )
-                    ] ),
-                    reify( 'td', { 'class' : 'polynomials' } , [ reifyText( ' = ' ) ] ),
-                    reify( 'td', { 'class' : 'polynomials' } , [
-                        reifyText( `${ acc } ` ),
-                        reify( "i", {}, [
-                            'uf' == error
-                                ? reify( "span", { 'class': 'uf' }, [ reifyText( '(uf)' ) ] )
-                                : 'fixedFactor' == error
-                                    ? reify( "span", { 'class': 'fixedFactor' }, [ reifyText( `(${ acc / fixedFactor } x ${ fixedFactor })` ) ] )
-                                    : 'factor' == error
-                                        ? reify( "span", { 'class': 'factor' }, [ reifyText( `(${ factor } x ${ acc / factor })` ) ] )
-                                        : reifyText( ` (${ factor } x ${ fixedFactor })` ),
-                        ] )
-                    ] )
-                ] )
-            )
-        );
     }
 }
 

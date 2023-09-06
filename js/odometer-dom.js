@@ -1,4 +1,40 @@
 
+Cycle.prototype.htmlEquations = function( cycles ) {
+    return reify(
+        "table",
+        { 'class': 'polynomials' },
+        cycleEquations( cycles, this ).map( (
+            {
+            'acc': acc,
+            'base': base,
+            'coeffs': coeffs,
+            'factor': factor,
+            'fixedFactor': fixedFactor,
+            'error': error,
+            'terminal': terminal
+            } ) => reify( 'tr', { 'class' : 'polynomials' } , [
+                reify( 'td', { 'class' : 'polynomials' } , [
+                ...coeffs.flatMap( (c,i) => [ reify( "b", {}, [ base > 10 ? reifyText( '&emsp14;' ) : null, reifyText( `${ c }` ) ] ) ] ),
+                reify( "sub", {}, [ reifyText( `${ base }` ) ] )
+                ] ),
+                reify( 'td', { 'class' : 'polynomials' } , [ reifyText( ' = ' ) ] ),
+                reify( 'td', { 'class' : 'polynomials' } , [
+                    reifyText( `${ acc } ` ),
+                    reify( "i", {}, [
+                    'uf' == error
+                        ? reify( "span", { 'class': 'uf' }, [ reifyText( '(uf)' ) ] )
+                        : 'fixedFactor' == error
+                            ? reify( "span", { 'class': 'fixedFactor' }, [ reifyText( `(${ acc / fixedFactor } x ${ fixedFactor })` ) ] )
+                            : 'factor' == error
+                                ? reify( "span", { 'class': 'factor' }, [ reifyText( `(${ factor } x ${ acc / factor })` ) ] )
+                                : reifyText( ` (${ factor } x ${ fixedFactor })` ),
+                    ] )
+                ] )
+            ] )
+        )
+    );
+}
+
 Cycles.prototype.cyclesView = {
     'normal': { orientation: '-1 -1 0 0.5', position: '-3.5 2.4 7' },
     'default': { width: '100%', height: '100%', orientation: '-1 -1 0 0.5', position: '-3.5 2.4 7' },
@@ -35,7 +71,7 @@ Cycles.prototype.htmlTableColumns = [ 'orbit', 'id-sum', 'coords-sum', 'order', 
 Cycles.prototype.htmlTableDiagramOptions = [ 'show', 'lines', 'grid', 'centres' ];
 Cycles.prototype.htmlTable = function() {
 
-    const allColumns = [ 'orbit', 'id-sum', 'coords', 'coords-sum', 'order', 'per2', 'rad', 'polynomials' ];
+    const allColumns = [ 'rotate', 'orbit', 'id-sum', 'coords', 'coords-sum', 'order', 'per2', 'rad', 'polynomials' ];
     const columns = [ '#', ...arrayIntersection( allColumns, this.htmlTableColumns ) ];
     const maybeDisplay = (label, domFn, clearFn) => this.htmlTableColumns.includes( label ) ? domFn() : clearFn ? clearFn() : null;
 
@@ -96,6 +132,7 @@ Cycles.prototype.htmlTable = function() {
 
     const identityRow = () => [
         reifyText( '<code>e</code>' ),
+        maybeDisplay( 'rotate', () => reify( 'span', {}, [] ) ),
         maybeDisplay( 'orbit', () => reifyText( identities.map( cycle => `(${ cycle })` ).join( ', ' ) ) ),
         maybeDisplay( 'id-sum', () => reifyText( `<code>${ identityIdSum }</code>` ) ),
         maybeDisplay( 'coords', () => reifyText( identities.map( cycle => cycle.map( c => `(${ this.box[c] })` ) ).join( ', ' ) ) ),
@@ -103,13 +140,15 @@ Cycles.prototype.htmlTable = function() {
         maybeDisplay( 'order', () => reifyText( `<code>1</code>` ) ),
         maybeDisplay( 'per2', () => reifyText( `<code>0</code>` ) ),
         maybeDisplay( 'rad', () => reifyText( `<code>0</code>` ) ),
-        maybeDisplay( 'polynomials', () => identities[identities.length-1].htmlEquations( this ) ),
+//        maybeDisplay( 'polynomials', () => identities[identities.length-1].htmlEquations( this ) ),
+        maybeDisplay( 'polynomials', () => reify( 'div', {}, identities.slice(1).map( identity => identity.htmlEquations( this ) ) ) ),
     ].filter( h => h );
 
     const totals = this.getStats();
 
     const footerRow = () => [
         reifyText( '' ),
+        maybeDisplay( 'rotate', () => reify( 'span', {}, [] ) ),
         maybeDisplay( 'orbit', () => reifyText( '' ) ),
         maybeDisplay( 'id-sum', () => reifyText( `<code>${ totals.idSum }</code>`, { 'class': 'sum-total' } ) ),
         maybeDisplay( 'coords', () => reifyText( '' ) ) ,
@@ -117,9 +156,46 @@ Cycles.prototype.htmlTable = function() {
         maybeDisplay( 'order', () => reifyText( `<code>${ this.order() }</code>`, { 'class': 'sum-total' } ) ),
         maybeDisplay( 'per2', () => reifyText( `<code>${ totals.euclideanPerimeter }</code>`, { 'class': 'sum-total' } ) ),
         maybeDisplay( 'rad', () => reifyText( `<code>${ totals.indexPerimeter }</code>`, { 'class': 'sum-total' } ) ),
-        maybeDisplay( 'polynomials', () => reifyText( '' ) )
+        maybeDisplay( 'polynomials', () => reifyText( '' ) ),
     ].filter(h => h );
 
+    const cellsRenderer = ( orbit, stats, i ) => [
+        reify( "td", {}, [ reify( "sup", {}, [ reifyText( `${ i + 1 }` ) ] ) ] ),
+        maybeDisplay( 'rotate', () => reify( "td", {}, [
+            reify('b', {}, [ reifyText( ' &larr; ' ) ], [ c => c.onclick = rotateOrbit( orbit, stats, i, 1 ) ] ),
+            reify('b', {}, [ reifyText( ' &rarr; ' ) ], [ c => c.onclick = rotateOrbit( orbit, stats, i, -1 ) ] )
+        ] ) ),
+        maybeDisplay( 'orbit', () => reify( "td", { cssClass: [ 'orbit' ] }, [ reifyText( `(${ orbit })` ) ] ) ),
+        maybeDisplay( 'id-sum', () => reify( "td", {}, [ reifyText( `${ stats.idSum }` ) ] ) ),
+        maybeDisplay( 'coords', () => reify( "td", { cssClass: [ 'orbit' ] }, [ reifyText( orbit.map( c => `(${ this.box[c] })` ) ) ] ) ),
+        maybeDisplay( 'coords-sum', () => reify( "td", {}, [ reifyText( `(${ stats.coordsSum.join( ', ' ) })` ) ] ) ),
+        maybeDisplay( 'order', () => reify( "td", {}, [ reifyText( `${ orbit.length }` ) ] ) ),
+        maybeDisplay( 'per2', () => reify( "td", {}, [ reifyText( `${ stats.euclideanPerimeter }` ) ] ) ),
+        maybeDisplay( 'rad', () => reify( "td", {}, [ reifyText( `${ stats.indexPerimeter }` ) ] ) ),
+        maybeDisplay( 'polynomials', () => reify( "td", {}, [ orbit.htmlEquations( this ) ] ) ),
+    ];
+    const rowRenderer = ( orbit, stats, i ) => reify(
+        "tr",
+        { 'id': `orbit.${ i }`, 'class': 'orbit-row' },
+        cellsRenderer( orbit, stats, i ),
+        [ c => c.onclick = onRowSelectionFactory( c ) ]
+    );
+
+    const rotateOrbit = ( orbit, stats, i, r ) => {
+        return ( event ) => {
+            event.stopPropagation();
+            const rowId = `orbit.${ i }`;
+            const orbitRows = tableContainer.querySelectorAll( '.orbit-row' );
+            orbitRows.forEach( row => {
+                if (row.id == rowId) {
+                    rotateArray( orbit, r );
+                    const cells = cellsRenderer( orbit, stats, i );
+                    row.innerHTML = '';
+                    cells.filter( cell => cell ).forEach( cell => row.appendChild( cell ) );
+                }
+            } );
+        }
+    };
 
     const tableRenderer = (orbits) => reify(
         "table",
@@ -130,24 +206,10 @@ Cycles.prototype.htmlTable = function() {
             reify( "tr", { 'id': 'orbit.e' }, identityRow().map( ir => reify( "td", {}, [ ir ] ) ), [ c => c.onclick = onRowSelectionFactory( c ) ] ),
             ...orbits
                 .map( orbit => [ orbit, orbit.getStats( this.box ) ] )
-                .map( ( [ orbit, stats ], i ) => reify(
-                    "tr",
-                    { 'id': `orbit.${ i }` },
-                    [
-                        reify( "td", {}, [ reify( "sup", {}, [ reifyText( `${ i + 1 }` ) ] ) ] ),
-                        maybeDisplay( 'orbit', () => reify( "td", { cssClass: [ 'orbit' ] }, [ reifyText( `(${ orbit })` ) ] ) ),
-                        maybeDisplay( 'id-sum', () => reify( "td", {}, [ reifyText( `${ stats.idSum }` ) ] ) ),
-                        maybeDisplay( 'coords', () => reify( "td", { cssClass: [ 'orbit' ] }, [ reifyText( orbit.map( c => `(${ this.box[c] })` ) ) ] ) ),
-                        maybeDisplay( 'coords-sum', () => reify( "td", {}, [ reifyText( `(${ stats.coordsSum.join( ', ' ) })` ) ] ) ),
-                        maybeDisplay( 'order', () => reify( "td", {}, [ reifyText( `${ orbit.length }` ) ] ) ),
-                        maybeDisplay( 'per2', () => reify( "td", {}, [ reifyText( `${ stats.euclideanPerimeter }` ) ] ) ),
-                        maybeDisplay( 'rad', () => reify( "td", {}, [ reifyText( `${ stats.indexPerimeter }` ) ] ) ),
-                        maybeDisplay( 'polynomials', () => reify( "td", {}, [ orbit.htmlEquations( this ) ] ) )
-                    ],
-                    [ c => c.onclick = onRowSelectionFactory( c ) ]
-            ) ),
+                .map( ( [ orbit, stats ], i ) => rowRenderer( orbit, stats, i ) ),
             reify( "tr", {}, footerRow().map( col => reify( "td", {}, [ col ] ) ), [ c => c.onclick = onRowSelectionFactory( c ) ] ),
          ] );
+
     const orbits =  this.filter( cycle => cycle.length > 1 );
     const columnSelectors = allColumns
         .map( (column,i) => reify( 'label', { 'class': 'columnSelector' }, [
@@ -309,7 +371,6 @@ FactorialBox.prototype.pointsDomNode = function(
                         !columns.includes( 'index' ) ? null : reify( 'td', {}, [ reifyText( `[${ point.index }]` ) ] ),
                         !columns.includes( 'deindex' ) ? null : reify( 'td', {}, [ reifyText( `[${ point.deindex }]` ) ] ),
                         !columns.includes( 'i-index' ) ? null : reify( 'td', {}, [ reifyText( `(${ point.inverse.index })` ) ] ),
-//                        !columns.includes( 'cycles' ) ? null : reify( 'td', {}, [ reifyText( `[${ point.cycles.map( cycle => `(${ cycle })` ).join('') }]` ) ] ),
                         !columns.includes( 'cycles' ) ? null : reify( 'td', {}, [
                             reifyText( point.cycles.identities().map( cycle => `(${ cycle })` ).join('') ),
                             reify( 'br' ),
