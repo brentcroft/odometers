@@ -53,18 +53,36 @@ class Cycles extends Array {
     }
 
     canonicalize() {
-        function ios( cycle ) {
-            var l = 0;
-            for (var i = 1; i < cycle.length; i++) {
-                if ( cycle[ i ] < cycle[ l ] ) {
-                    l = i;
-                }
+        this.associateComplements();
+        const comparator = (a,b) => {
+            if (a.complementCode < 0) {
+                return comparator(a.complement, b);
             }
-            return l;
-        }
-        this.forEach( cycle => rotateArray( cycle, ios( cycle ) ) );
-        const comparator = (a,b) => a.length == b.length ? a[0] - b[0] : a.length - b.length;
+            return a.length == b.length ? a[0] - b[0] : a.length - b.length
+        };
         this.sort( comparator );
+    }
+
+    associateComplements() {
+        const terminal = this.index.length - 1;
+        this.filter( cycle => !cycle.complement )
+            .forEach( cycle => {
+                const target = terminal - cycle[0] ;
+                if ( cycle.find( c => c == target ) ) {
+                    cycle.complement = cycle;
+                    cycle.complementCode = 0;
+                } else {
+                    const complement = this.filter( complementCycle => !complementCycle.complement )
+                        .find( complementCycle => complementCycle.find( c => c == target ) );
+                    if ( complement ) {
+                        cycle.complement = complement;
+                        complement.complement = cycle;
+                        cycle.complementCode = 1;
+                        complement.complementCode = -1;
+                        rotateArray( complement, complement.indexOf( target ) )
+                    }
+                }
+            } );
     }
 
     identities() {
@@ -77,28 +95,8 @@ class Cycles extends Array {
 
     C() {
         if (!Object.hasOwn( this, '$C')) {
-//            const C = [];
-//            const order = this.order();
-//            const terminalCoords = this.getTerminal();
-//            const bases = this.box.odometer.bases;
-//            const factor = BigNumber(this.box.length - 1);
-//            bases.forEach( (base, bI) => {
-//                const baseIndex = bI; //(bases.length -1 - bI);
-//                const bnb = BigNumber(base);
-//                const terminalCoord = terminalCoords[baseIndex];
-//                const coeffs = [];
-//                for (var i = 0; i < order; i++) {
-//                    coeffs.push( terminalCoord );
-//                }
-//                var acc1 = BigNumber(0);
-//                var basePower1 = BigNumber(1);
-//                coeffs.forEach( (coeff, place) => {
-//                    acc1 = acc1.plus( basePower1.multipliedBy(coeff) );
-//                    basePower1 = basePower1.multipliedBy(bnb);
-//                } );
-//                C.push( acc1.dividedBy( factor ) );
-//            } );
-            this.$C = terminalPolynomials( this.order(), this.box.odometer.bases ).map( tp => tp.dividedBy( this.box.length - 1 ));
+            this.$C = terminalPolynomials( this.order(), this.box.odometer.bases )
+                .map( tp => tp.dividedBy( this.box.length - 1 ));
         }
         return this.$C;
     }
@@ -165,17 +163,7 @@ class Cycles extends Array {
         return monomial;
     }
 
-    htmlMonomial() {
-        return reify( "span", { 'class': 'monomial' }, Object
-            .entries( this.monomial() )
-            .flatMap( ( [ k, e ] ) => [
-                reify( "i", {}, [ reifyText( k == 1 ? "(e" : "a" )  ] ),
-                reify( "sup", {}, [ reifyText( `${ e }` ) ] ),
-                k == 1
-                    ? reifyText( ")" )
-                    : reify( "sub", { 'style': 'position: relative; left: -.5em;'}, [ reifyText( `${ k }` ) ] )
-            ] ) );
-    }
+
     getRank() {
         return this.box.odometer.length;
     }

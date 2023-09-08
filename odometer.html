@@ -40,23 +40,23 @@
             }
             return null;
         }
-        function drawActionsTables() {
-            if ( byId('actionsTableToggle').checked ) {
-                byId( 'boxActions' ).appendChild( reify( 'hr' ) );
-                const actions = Box
-                        .list()
-                        .filter( box => box.actions().length > 0 )
-                        .flatMap( box => box.actions() );
-                byId( 'boxActions' )
-                    .appendChild( reify(
-                        'div',
-                        { 'class': 'expressionScriptResult' },
-                        [ cyclesDomNode( actions, 'Box Actions', getMonomialFilter(), byId( 'boxCycles' ) ) ]
-                    ) );
-            } else {
-                byId( 'boxActions' ).innerHTML = '';
-            }
-        }
+<!--        function drawActionsTables() {-->
+<!--            if ( byId('actionsTableToggle').checked ) {-->
+<!--                byId( 'boxActions' ).appendChild( reify( 'hr' ) );-->
+<!--                const actions = Box-->
+<!--                        .list()-->
+<!--                        .filter( box => box.actions().length > 0 )-->
+<!--                        .flatMap( box => box.actions() );-->
+<!--                byId( 'boxActions' )-->
+<!--                    .appendChild( reify(-->
+<!--                        'div',-->
+<!--                        { 'class': 'expressionScriptResult' },-->
+<!--                        [ cyclesDomNode( actions, 'Box Actions', getMonomialFilter(), byId( 'boxCycles' ) ) ]-->
+<!--                    ) );-->
+<!--            } else {-->
+<!--                byId( 'boxActions' ).innerHTML = '';-->
+<!--            }-->
+<!--        }-->
         function putActions( result ) {
             const container = byId( 'expressionResults' );
             container.innerHTML = '';
@@ -216,7 +216,7 @@
 
         function calculateNow() {
             calculate( byId( 'expressionScript' ).value );
-            drawActionsTables();
+<!--            drawActionsTables();-->
         }
         function autoCalc() {
             if ( byId('autoCalc').checked ) {
@@ -270,7 +270,7 @@
 </head>
 <body onload="renderExpressionLibraryLinks(); selectScript('default')">
     | <label class="columnSelector">expressions:<input type="checkbox" checked="checked" id="expressionPanelToggle" onclick="showHide( 'expressionScriptLabel', this );"/></label>
-    | <label class="columnSelector">boxes:<input type="checkbox" id="actionsTableToggle" onclick="showHide( 'boxActions', this );drawActionsTables()"/></label>
+<!--    | <label class="columnSelector">boxes:<input type="checkbox" id="actionsTableToggle" onclick="showHide( 'boxActions', this );drawActionsTables()"/></label>-->
     <label  style="display: none" class="columnSelector">clear on calculate:<input type="checkbox" checked="checked" id="clearOnCalculate"/></label>
     | <label class="columnSelector">auto-calc:<input type="checkbox" checked="checked" id="autoCalc" onclick="autoCalc()"/></label>
     | <label class="columnSelector">auto-label:<input type="checkbox" id="autoLabel" onclick="autoCalc()"/></label>

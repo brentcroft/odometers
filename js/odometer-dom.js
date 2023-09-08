@@ -35,6 +35,18 @@ Cycle.prototype.htmlEquations = function( cycles ) {
     );
 }
 
+Cycles.prototype.htmlMonomial = function() {
+    return reify( "span", { 'class': 'monomial' }, Object
+        .entries( this.monomial() )
+        .flatMap( ( [ k, e ] ) => [
+            reify( "i", {}, [ reifyText( k == 1 ? "(e" : "a" )  ] ),
+            reify( "sup", {}, [ reifyText( `${ e }` ) ] ),
+            k == 1
+                ? reifyText( ")" )
+                : reify( "sub", { 'style': 'position: relative; left: -.5em;'}, [ reifyText( `${ k }` ) ] )
+        ] ) );
+}
+
 Cycles.prototype.cyclesView = {
     'normal': { orientation: '-1 -1 0 0.5', position: '-3.5 2.4 7' },
     'default': { width: '100%', height: '100%', orientation: '-1 -1 0 0.5', position: '-3.5 2.4 7' },
@@ -67,7 +79,7 @@ Cycles.prototype.htmlSummary = function() {
          this.htmlMonomial()
       ] );
 };
-Cycles.prototype.htmlTableColumns = [ 'rotate', 'orbit', 'id-sum', 'coords-sum', 'order', 'per2', 'rad', 'polynomials' ];
+Cycles.prototype.htmlTableColumns = [ 'rotate', 'orbit', 'id-sum', 'coords-sum', 'order', 'per2', 'rad' ];
 Cycles.prototype.htmlTableDiagramOptions = [ 'show', 'lines', 'grid', 'centres' ];
 Cycles.prototype.htmlTable = function() {
 
@@ -159,6 +171,13 @@ Cycles.prototype.htmlTable = function() {
         maybeDisplay( 'polynomials', () => reifyText( '' ) ),
     ].filter(h => h );
 
+    const [ masterArrow, slaveArrow ] = [ '&#129110', '&#129109' ];
+    const complementCode = ( cycle ) => cycle.complementCode == 1
+            ? masterArrow
+            : cycle.complementCode == -1
+                ? slaveArrow
+                : '';
+
     const cellsRenderer = ( orbit, stats, i ) => [
         reify( "td", {}, [ reify( "sup", {}, [ reifyText( `${ i + 1 }` ) ] ) ] ),
         maybeDisplay( 'rotate', () => reify( "td", {}, [
@@ -166,7 +185,10 @@ Cycles.prototype.htmlTable = function() {
             reifyText( '&nbsp;&nbsp;&nbsp;&nbsp;' ),
             reify('b', { 'class': 'control' }, [ reifyText( '&rarr;' ) ], [ c => c.onclick = rotateOrbit( orbit, stats, i, -1 ) ] ),
         ] ) ),
-        maybeDisplay( 'orbit', () => reify( "td", { cssClass: [ 'orbit' ] }, [ reifyText( `(${ orbit })` ) ] ) ),
+        maybeDisplay( 'orbit', () => reify( "td", { cssClass: [ 'orbit' ] }, [
+            reifyText( `(${ orbit })` ),
+            reifyText( complementCode( orbit ) ),
+        ] ) ),
         maybeDisplay( 'id-sum', () => reify( "td", {}, [ reifyText( `${ stats.idSum }` ) ] ) ),
         maybeDisplay( 'coords', () => reify( "td", { cssClass: [ 'orbit' ] }, [ reifyText( orbit.map( c => `(${ this.box[c] })` ) ) ] ) ),
         maybeDisplay( 'coords-sum', () => reify( "td", {}, [ reifyText( `(${ stats.coordsSum.join( ', ' ) })` ) ] ) ),
@@ -352,7 +374,7 @@ FactorialBox.prototype.pointsDomNode = function(
                     'tr',
                     {},
                     [
-                        reify( 'td', {}, [ reifyText( `${ i }` ) ] ),
+                        reify( 'td', {}, [ reifyText( `${ i + 1 }` ) ] ),
                         !columns.includes( 'label' ) ? null : reify( 'td', {}, [ reifyText( `${ point.label() }` ) ] ),
                         !columns.includes( 'alias' ) ? null : reify( 'td', {}, [ reifyText( point.cycles.others ? `[${ point.cycles.others.map(o => o.key).join("=") }]` : "" ) ] ) ,
                         !columns.includes( 'label-coord' ) ? null : reify( 'td', {}, [ reifyText( `${ point.labelCoord }` ) ] ),
@@ -502,7 +524,7 @@ function cyclesDomNode( actions, caption = null, monomialFilter = null ) {
                         'class': i == actionsHtmlTableSelectedIndex[0] ? 'default-selection' : ''
                     },
                     [
-                        reify( 'td', {}, [ reifyText( `${ i }` ) ] ),
+                        reify( 'td', {}, [ reifyText( `${ i + 1 }` ) ] ),
                         maybeDisplay( 'box', () => reify( 'td', {}, [ reifyText( `[${ cycles.getBases().join(':') }]` ) ] ) ),
                         maybeDisplay( 'alias', () => reify( 'td', {}, [ reifyText( `${ cycles.ref() }` ) ] ) ),
                         maybeDisplay( 'label', () => reify( 'td', {}, [ reifyText( `${ cycles.label() }` ) ] ) ),
