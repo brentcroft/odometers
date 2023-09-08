@@ -130,7 +130,7 @@ Cycles.prototype.htmlTable = function() {
         });
     }
 
-    const onRowSelectionFactory = ( source ) => {
+    const onRowSelectionFactory = ( source, orbit, i ) => {
         return ( event ) => {
             const classList = source.classList;
             if ( classList.contains( 'selected' ) ) {
@@ -197,11 +197,12 @@ Cycles.prototype.htmlTable = function() {
         maybeDisplay( 'rad', () => reify( "td", {}, [ reifyText( `${ stats.indexPerimeter }` ) ] ) ),
         maybeDisplay( 'polynomials', () => reify( "td", {}, [ orbit.htmlEquations( this ) ] ) ),
     ];
+    
     const rowRenderer = ( orbit, stats, i ) => reify(
         "tr",
         { 'id': `orbit.${ i }`, 'class': 'orbit-row' },
         cellsRenderer( orbit, stats, i ),
-        [ c => c.onclick = onRowSelectionFactory( c ) ]
+        [ c => c.onclick = onRowSelectionFactory( c, orbit, i ) ]
     );
 
     const rotateOrbit = ( orbit, stats, i, r ) => {
