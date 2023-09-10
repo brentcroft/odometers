@@ -248,7 +248,7 @@ class FactorialBox extends AbstractBox {
             point.key = this.makeLabel( point ).join('');
 
             point.index = [];
-            point.parity = -1 * point[0];
+            //point.parity = -1 * point[0];
         } );
         this.forEach( point => {
             if (!point.inverse) {
@@ -336,38 +336,15 @@ class Box extends AbstractBox {
     }
 
     actions() {
+        const twist = true;
         if ( this.actionsCache.length == 0 ) {
             this.actionsCache = this.permBox.flatMap( pr => this.permBox
                 .filter( pl => pl != pr )
-                .map( pl => {
-                    const c = compose( pr, pl, true, this );
-                    c.parity = arrayCompare( pl.perm, pr.perm ) > 0;
-                    return c;
+                .flatMap( pl => {
+                    const action = compose( pr, pl, twist, this );
+                    action.permPair = [ pr.perm, pl.perm ];
+                    return [ action ];
                 } ) );
-            // assign inverses
-            const inverseOf = ( idx ) => {
-                const index = new Array( idx.length );
-                for ( var i = 0; i < idx.length; i++ ) {
-                    index[i] = idx.indexOf(i);
-                }
-                return index;
-            };
-            this.actionsCache.forEach( a0 => {
-                if (!Object.hasOwn( a0, 'inverse' )) {
-                    const dix = inverseOf( a0.index );
-                    const a1 = this.actionsCache
-                        .filter( a => !Object.hasOwn( a, 'inverse' ) )
-                        .find( a => arrayExactlyEquals( a.index, dix ) );
-                    if (a1) {
-                        a0.inverse = a1;
-                        a1.inverse = a0;
-                    } else {
-//                        a0.inverse = null;
-//                        throw new Error(`Inverse not found: ${a0.label()}`);
-                    }
-                }
-            } );
-
         }
         return this.actionsCache;
     }

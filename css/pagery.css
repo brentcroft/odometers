@@ -60,6 +60,10 @@ table.polynomials {
 table.polynomials tr td { background: white; }
 tr.polynomials { background: white; }
 
+.sort-asc::after { content: " \2193"; font-face: bold; }
+.sort-desc::after { content: " \2191"; font-face: bold;  }
+
+
 .factor {
     color: black;
     background: lightgreen;

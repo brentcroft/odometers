@@ -18,7 +18,7 @@ function terminalPolynomials( order, bases ) {
     return C;
 }
 
-function cycleEquations( cycles, cycle ) {
+function cyclePolynomials( cycles, cycle ) {
     const equations  = [];
     const bases = [...cycles.box.odometer.bases];
     const dimension = bases.length;
