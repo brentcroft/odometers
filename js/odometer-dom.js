@@ -84,6 +84,16 @@ Cycles.prototype.htmlTableDiagramOptions = [ 'show', 'lines', 'grid', 'centres' 
 Cycles.prototype.htmlTable = function() {
 
     const allColumns = [ 'rotate', 'orbit', 'id-sum', 'coords', 'coords-sum', 'order', 'per2', 'rad', 'polynomials' ];
+    const allColumnsTypes = {
+        '#': 'number',
+        'orbit': 'cycles',
+        'id-sum': 'number',
+        'coords': 'cycles',
+        'coords-sum': 'number',
+        'order': 'number',
+        'per2': 'number',
+        'rad': 'number'
+    };
     const columns = [ '#', ...arrayIntersection( allColumns, this.htmlTableColumns ) ];
     const maybeDisplay = (label, domFn, clearFn) => this.htmlTableColumns.includes( label ) ? domFn() : clearFn ? clearFn() : null;
 
@@ -101,8 +111,6 @@ Cycles.prototype.htmlTable = function() {
         .map( cycle => cycle[0] )
         .reduce( (a, id) => a + id, 0 );
     const identityIdSumGcd = gcd( maxIndex, identityIdSum );
-
-
 
     const tableContainer = reify( 'div' );
     const diagramContainer = reify( 'div', { 'style': 'border: solid black 1px; resize: both; overflow: auto; width: 100%; height: 300px;' } );
@@ -226,12 +234,12 @@ Cycles.prototype.htmlTable = function() {
          { 'cssClass': [ 'box-action' ] },
          [
             reify( "caption", {}, [ this.htmlSummary() ] ),
-            reify( 'tr', {}, [ '#', ...arrayIntersection( allColumns, columns ) ].map( (column, i) => reify( 'th', {}, [ reifyText( column ) ], [ c => c.onclick = () => sortTable( c, i ) ] ) ) ),
-            reify( "tr", { 'id': 'orbit.e' }, identityRow().map( ir => reify( "td", {}, [ ir ] ) ), [ c => c.onclick = onRowSelectionFactory( c ) ] ),
+            reify( 'tr', {}, [ '#', ...arrayIntersection( allColumns, columns ) ].map( (column, i) => reify( 'th', {}, [ reifyText( column ) ], [ c => c.onclick = () => sortTable( c, i, allColumnsTypes[ column ] ) ] ) ) ),
+            reify( "tr", { 'id': 'orbit.e' }, identityRow().map( ir => reify( "td", { 'class': 'sum-total' }, [ ir ] ) ), [ c => c.onclick = onRowSelectionFactory( c ) ] ),
             ...orbits
                 .map( orbit => [ orbit, orbit.getStats( this.box ) ] )
                 .map( ( [ orbit, stats ], i ) => rowRenderer( orbit, stats, i ) ),
-            reify( "tr", {}, footerRow().map( col => reify( "td", {}, [ col ] ) ), [ c => c.onclick = onRowSelectionFactory( c ) ] ),
+            reify( "tr", {}, footerRow().map( col => reify( "td", { 'class': 'sum-total' }, [ col ] ) ), [ c => c.onclick = onRowSelectionFactory( c ) ] ),
          ] );
 
     const orbits =  this.filter( cycle => cycle.length > 1 );
@@ -355,6 +363,12 @@ FactorialBox.prototype.pointsDomNode = function(
     };
     const allColumns = [ 'label', 'alias', 'label-coord', 'coord', 'perm', 'anti-perm', 'bases', 'place-values',
         'inverse', 'i-label-coord', 'i-coord', 'match', 'monomial', 'index', 'cycles', 'diagram' ];
+    const allColumnsTypes = {
+        'label': null,
+        'constants': 'number',
+        'monomial': 'monomial',
+    };
+
     const columns = [ '#', ...arrayIntersection( allColumns, cols ) ];
     const maybeDisplay = (label, domFn) => columns.includes( label ) ? domFn() : null;
 
@@ -443,6 +457,16 @@ function cyclesDomNode( actions, caption = null, monomialFilter = null ) {
         'index',
 //        'cycles',
     ];
+    const allColumnsTypes = {
+        '#': 'number',
+        'label': 'cycles',
+        'constants': 'cycles',
+        'monomial': 'monomial',
+        'volume': 'number',
+        'order': 'number',
+        'per2': 'number',
+        'rad': 'number'
+    };
     const columns = [ '#', ...arrayIntersection( allColumns, actionsHtmlTableColumns ) ];
 
     const otherLabel = ( source ) => {
@@ -515,7 +539,7 @@ function cyclesDomNode( actions, caption = null, monomialFilter = null ) {
                 'tr',
                 {},
                 [ '#', ...arrayIntersection( allColumns, columns ) ]
-                    .map( ( column, i) => reify( 'th', {}, [ reifyText( column ) ], [ c => c.onclick = () => sortTable( c, i ) ] ) )
+                    .map( ( column, i) => reify( 'th', {}, [ reifyText( column ) ], [ c => c.onclick = () => sortTable( c, i, allColumnsTypes[ column ] ) ] ) )
             ),
             ...actions
                 .filter( cycles => !monomialFilter || monomialFilterMatches( cycles.monomial(), monomialFilter ) )
@@ -712,12 +736,9 @@ function sortTable( column, columnIndex, columnType ) {
             .reduce( (a,c) => a + c, 0 );
     }
 
-    function Cycles( s ) {
+    function BracketedNumbers( s ) {
         s = s.trim();
-        if ( s.startsWith( "(" ) && s.endsWith( ")" ) ) {
-            s = s.substring( 1, s.length - 1 );
-            s = s.trim();
-        }
+        s = s.replaceAll( /[()]/, '');
         return s
             .split( /<br[\/]?>/ )
             .map( x => x
@@ -742,6 +763,9 @@ function sortTable( column, columnIndex, columnType ) {
             /* Get the two elements you want to compare,
             one from current row and one from the next: */
             x = rows[i].getElementsByTagName("TD")[columnIndex];
+            if ( x.classList.contains("sum-total") ) {
+                continue;
+            }
             y = rows[i + 1].getElementsByTagName("TD")[columnIndex];
 
             if (y && !y.classList.contains("sum-total") ) {
@@ -768,6 +792,10 @@ function sortTable( column, columnIndex, columnType ) {
                           var yV = Product( yT );
                           break;
 
+                        case 'cycles':
+                          var xV = BracketedNumbers( xT );
+                          var yV = BracketedNumbers( yT );
+                          break;
 
                         default:
                           var xV = xT;
