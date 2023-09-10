@@ -738,7 +738,7 @@ function sortTable( column, columnIndex, columnType ) {
 
     function BracketedNumbers( s ) {
         s = s.trim();
-        s = s.replaceAll( /[()]/, '');
+        s = s.replaceAll( /[\[\]\(\)@]/g, '');
         return s
             .split( /<br[\/]?>/ )
             .map( x => x
