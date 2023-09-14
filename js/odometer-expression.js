@@ -16,6 +16,12 @@ class CyclesExpression {
         return lines;
     }
 
+    static evaluate( script ) {
+        const expression = new CyclesExpression();
+        const tree = expression.compile( script );
+        return expression.evaluate( tree );
+    }
+
     constructor( autoLabel = false ) {
         this.autoLabel = autoLabel;
         this.names = {};

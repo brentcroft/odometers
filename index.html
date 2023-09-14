@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Thinking inside the Box</title>
+
+    <meta charset="utf-8"/>
+
+    <link rel="stylesheet" type="text/html" href="js/x3dom.css"/>
+    <script type="text/javascript" src="js/x3dom.js"></script>
+
+    <script type="text/javascript" src="js/3d.js"></script>
+
+    <script type="text/javascript" src="js/nearley/moo.js"></script>
+    <script type="text/javascript" src="js/nearley/grammar.js"></script>
+    <script type="text/javascript" src="js/nearley/nearly.js"></script>
+    <script type="text/javascript" src="js/odometer-expression.js"></script>
+
+    <script type="text/javascript" src="js/reify.js"></script>
+
+    <script type="text/javascript" src="js/colors.js"></script>
+    <script type="text/javascript" src="js/cycles-x3dom.js"></script>
+
+    <script type="text/javascript" src="js/bignumber.js"></script>
+    <script type="text/javascript" src="js/polynomials.js"></script>
+
+    <script type="text/javascript" src="js/basic.js"></script>
+    <script type="text/javascript" src="js/cycle-operations.js"></script>
+    <script type="text/javascript" src="js/cycles.js"></script>
+
+    <script type="text/javascript" src="js/odometer.js"></script>
+    <script type="text/javascript" src="js/odometer-dom.js"></script>
+
+    <link rel="stylesheet" href="css/pagery.css">
+    <script type="text/javascript" src="js/pagery.js"></script>
+
+    <script>
+        var pageRefs = {
+            'page-1-0': 'pages/1.0-introduction.html',
+        };
+    </script>
+</head>
+
+<body onload="includePages( 'pages', 'errors', pageRefs )" class="smallish">
+    <div class="menu noprint">
+        <a href="index.html" title="Thinking inside the box">doc</a>
+        <a href="odometer.html" title="Odometer">odometer</a>
+    </div>
+
+    <div id="errors"></div>
+
+    <h1>Thinking inside the Box</h1>
+<!--    <div>-->
+<!--        Alaric Dobson, 2023-09-14<br/>-->
+<!--        alaric@brentcroft.com-->
+<!--    </div>-->
+    <div id="pages"></div>
+</body>
+</html>

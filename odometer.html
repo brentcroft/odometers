@@ -270,8 +270,12 @@
     </script>
     <title>Odometers</title>
 </head>
-<body onload="renderExpressionLibraryLinks(); selectScript('a:b:c')">
-    | <label class="columnSelector">expressions:<input type="checkbox" checked="checked" id="expressionPanelToggle" onclick="showHide( 'expressionScriptLabel', this );"/></label>
+<body onload="renderExpressionLibraryLinks(); selectScript('a:b:c')" class="smallish">
+    <div class="menu noprint">
+        <a href="index.html" title="Thinking inside the box">doc</a>
+        <a href="odometer.html" title="Odometer">odometer</a>
+    </div>
+    <label class="columnSelector">expressions:<input type="checkbox" checked="checked" id="expressionPanelToggle" onclick="showHide( 'expressionScriptLabel', this );"/></label>
     | <label class="columnSelector">boxes:<input type="checkbox" id="actionsTableToggle" onclick="showHide( 'boxActions', this );drawActionsTables()"/></label>
     <label  style="display: none" class="columnSelector">clear on calculate:<input type="checkbox" checked="checked" id="clearOnCalculate"/></label>
     | <label class="columnSelector">auto-calc:<input type="checkbox" checked="checked" id="autoCalc" onclick="autoCalc()"/></label>

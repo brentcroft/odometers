@@ -1,0 +1,152 @@
+<script>
+    pageScope.bases = [5,3];
+    pageScope.box = Box.of( pageScope.bases );
+</script>
+
+<h2>Introduction</h2>
+
+Consider a box with <a class="eval" title="pageScope.box.rank()">RANK</a> sides of different lengths: for example <a class="eval" title="pageScope.box.specification()">SPEC</a>;
+it contains <a class="eval" title="pageScope.box.length">VOLUME</a> points.
+<br/>
+<br/>
+The specification <a class="eval" title="pageScope.box.specification()">SPEC</a> means
+"<a class="eval" title="pageScope.box.explanation()"></a>".
+<br/>
+<br/>
+<span class="evalNode" title="pageScope.box.packingTable()"></span>
+<br/>
+
+The reverse specification <a class="eval" title="pageScope.box.specification( invert = true )">SPEC</a> means
+"<a class="eval" title="pageScope.box.explanation( invert = true )"></a>".
+<br/>
+<br/>
+<span class="evalNode" title="pageScope.box.packingTable( invert = true )"></span>
+<br/>
+<br/>
+One is a reflection of the other through the diagonal [ (<a class="eval" title="pageScope.box[0]"></a> ), (<a class="eval" title="pageScope.box[ pageScope.box.length - 1 ]"></a>) ];
+the coordinates remain the same to uniquely identify the points, but the order in which the points occur changes.
+<br/>
+<br/>
+
+
+<h3>Place Values, Coordinates and Index numbers</h3>
+
+A box specification aligns with the numeral place value convention where the significance of each place value increases from right-to-left,
+but the base counted by each place value varies with the box side lengths.
+<br/>
+<br/>
+
+
+Each point in the box <a class="eval" title="pageScope.box.specification()"></a> can have a unique coordinate in the range:
+[ (<a class="eval" title="pageScope.box[0]"></a> ), (<a class="eval" title="pageScope.box[ pageScope.box.length - 1 ]"></a>) ],
+and each coordinate represents a numeral,
+with respect to the box specification,
+that evaluates to a unique index number in the range
+[ 0, <a class="eval" title="( pageScope.box.volume - 1 )"></a> ].
+
+The specification determines the sequence of place values,
+and the scalar product of the place values with each coordinate produces the corresponding index number.<br/>
+<br/>
+
+
+For example, the box specification <a class="eval" title="pageScope.box.specification()"></a>
+has the place values structure [ <a class="eval" title="pageScope.box.placeValuesStructure()"></a> ]
+which evaluates to [ <a class="eval" title="pageScope.box.placeValues()"></a> ],
+and produces the following coordinates and index numbers:
+<br/>
+<br/>
+<span class="evalNode" title="pageScope.box.placeValueTable( pageScope.box.length / Math.max( ...pageScope.bases ) )"></span>
+<br/>
+
+However, the reverse box specification <a class="eval" title="pageScope.box.specification( true )"></a>
+has the place values structure [ <a class="eval" title="pageScope.box.placeValuesStructure( invert = true )"></a> ]
+which evaluates to [ <a class="eval" title="pageScope.box.placeValues( invert = true )"></a> ],
+and produces the following, partially different, coordinates and index numbers:
+<br/>
+<br/>
+<span class="evalNode" title="pageScope.box.placeValueTable( pageScope.box.length / Math.max( ...pageScope.bases ), false, true )"></span>
+<br/>
+
+The rows and columns from any one specification can always be reordered to match coordinates with any other specification from the same box,
+for example:
+<br/>
+<br/>
+<span class="evalNode" title="pageScope.box.placeValueTable(
+        pageScope.box.volume / Math.max( ...pageScope.bases ),
+        new Array( pageScope.bases.length ).fill( 0 ).map( (_,i) => i ).reverse(),
+        true
+    )"></span>
+<br/>
+
+<h3>Index Comparison: Permutations and Cycles</h3>
+
+The index numbers for corresponding coordinates, for any two specifications from the same box, can be compared:
+<br/>
+<br/>
+<span class="evalNode" title="pageScope.box.compareBoxSpecificationsTable()"></span>
+<br/>
+
+The second row is a permutation of the first row and this maps all the points in the box back onto all the points in the box.
+This is an action of the box, it moves points around inside the box.
+<br/>
+<br/>
+
+Specifically:
+<script>
+    pageScope.cycles = CyclesExpression.evaluate( pageScope.bases.join( ':' ) )[0];
+    pageScope.cyclesInverse = CyclesExpression.evaluate( [...pageScope.bases].reverse().join( ':' ) )[0];
+
+    pageScope.cycleOrbitsArrowNotation = pageScope.cycles
+        .orbits()
+        .map( cycle => [ cycle.map( ( c, i ) => `${ c }${ i + 1 == cycle.length ? ' &rarr; 1' : ' &rarr; ' + cycle[ i + 1 ] + ' | ' }` ).join( '' ), cycle.length ] )
+        .map( ( [x, l], i ) => `<li>${ i == 0 ? 'A' : 'Another' } cycle of length ${ l }:<br/><br/>${ x }</li>` )
+        .flatMap( cycle => cycle )
+        .join( '' );
+    pageScope.cycleIdentitiesArrowNotation = '<li>Cycles of length 1, or fixed points:<br/><br/>' + pageScope.cycles
+        .identities()
+        .map( cycle => cycle.map( c => `${ c } &rarr; ${ c }` ) )
+        .join( ' | ' ) + '</li>';
+</script>
+
+<ul class="eval" title="[ pageScope.cycleOrbitsArrowNotation, pageScope.cycleIdentitiesArrowNotation ].join( '' )"></ul>
+
+
+This is written more succinctly as an expression in cycle notation:
+<br/>
+<br/>
+<span class="eval" title="pageScope.cycles
+            .map( cycle => `( ${ cycle.join( ' ' ) } )` )
+            .join( ' ' )"></span>
+<br/>
+<br/>
+
+NB: Here it's useful to retain the fixed points in the expression, even though they are usually elided,
+so that the entire set of points is presented.
+<br/>
+<br/>
+
+<hr class="pagebreak"/>
+
+A cycles expression can be plotted as a radiance diagram:
+<div class="evalNode" title="pageScope.cycles.x3dCycles()"></div>
+<br/>
+<br/>
+
+Swapping the two specifications in the comparison produces the same cycles in reverse:
+<br/>
+<br/>
+<span class="evalNode" title="pageScope.box.compareBoxSpecificationsTable( invert = true )"></span>
+<br/>
+
+<span class="eval" title="pageScope
+            .cyclesInverse
+            .map( cycle => `( ${ cycle.join( ' ' ) } )` )
+            .join( ' ' )"></span>
+<br/>
+<div class="evalNode" title="pageScope.cyclesInverse.x3dCycles()"></div>
+<br/>
+<br/>
+
+Comparing a specification with itself always produces a set of fixed points only.
+<br/>
+<br/>

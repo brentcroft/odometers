@@ -1,24 +1,8 @@
-
-/*
-const pages = {
-    'page-0-1': '0.1-the-multiplicative-group.html',
-    'page-1-0': '1.0-tally-ho.html',
-    'page-2-0': '2.0-place-value-tables.html',
-    'page-3-0': '3.0-conjugate-points-radiance.html',
-    'page-4-0': '4.0-two-dimensional-boxes.html',
-    'page-4-1': '4.1-two-more-boxes.html',
-    'page-5-0': '5.0-three-dimensional-boxes.html'
-};
-*/
 function includePages( pagesElementId, errorElementId, pages ) {
-
     const pagesElement = document.getElementById( pagesElementId );
     const errorElement = document.getElementById( errorElementId );
-
     const tally = Object.keys( pages );
-
     const urlParam = new URLSearchParams( window.location.search );
-
     Object
         .entries( pages )
         .forEach( entry => {
@@ -30,22 +14,14 @@ function includePages( pagesElementId, errorElementId, pages ) {
             const request = new XMLHttpRequest();
 
             const includer = () => {
-
                 try {
                     entryElement.innerHTML = request.responseText;
-
                     const scripts = [];
-
                     entryElement
                         .querySelectorAll( "script" )
                         .forEach( s => scripts.push( s.textContent ) );
-
                     // scripts do not run concurrently
-                    const pageScope = {
-                        id: id,
-                        src: src
-                    };
-
+                    const pageScope = { id: id, src: src };
                     scripts
                         .filter( s => s.length > 0 )
                         .forEach( ( s, i ) => {
@@ -67,7 +43,8 @@ function includePages( pagesElementId, errorElementId, pages ) {
                                     .appendChild( reify( "div", {}, [], [ c => c.innerHTML = e.toString() ] ) )
                             }
                         } );
-
+                    // replace the content of any marked elements
+                    // with the evaluation of the title attribute
                     entryElement
                         .querySelectorAll( ".eval" )
                         .forEach( ( ref, i ) => {
@@ -79,14 +56,14 @@ function includePages( pagesElementId, errorElementId, pages ) {
                                     throw new Error( "Invalid Object: " + t );
                                 }
                             } catch ( e ) {
-
                                 const msg = `Bad Eval [${ src }#${ id }#${ i + 1 }]: title=${ ref.title }; ${ e }`;
                                 console.log( msg );
                                 ref
                                     .appendChild( reify( "div", { class: "error" }, [], [ c => c.innerHTML = msg ] ) )
                             }
                         } );
-
+                    // append to the content of any marked elements
+                    // with the evaluation of the title attribute
                     entryElement
                         .querySelectorAll( ".evalNode" )
                         .forEach( ( ref, i ) => {
@@ -113,17 +90,13 @@ function includePages( pagesElementId, errorElementId, pages ) {
                     console.trace();
                     errorElement
                         .appendChild( reify( "div", { class: "error" }, [], [ c => c.innerHTML = e.toString() ] ) );
-
                 } finally {
-
                     tally.pop();
-
                     if ( tally.length == 0 ) {
                         x3dom.reload();
                     }
                 }
             };
-
             request.addEventListener( "load", includer );
             request.open( "GET", src );
             request.send();

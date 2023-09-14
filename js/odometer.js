@@ -95,7 +95,6 @@ class Point extends Array {
 }
 
 class AbstractBox extends Array {
-
     constructor( odometer ) {
         super( arguments.length > 0 &&  Number.isInteger( arguments[0] ) ? arguments[0] : 0 );
         if ( Array.isArray(odometer) ) {
@@ -103,7 +102,6 @@ class AbstractBox extends Array {
             this.centre = this.odometer.bases.map( b => b / 2);
         }
     }
-
     buildPoints() {
         this.length = 0;
         const dials = this.odometer;
@@ -114,6 +112,32 @@ class AbstractBox extends Array {
             this.push( new Point( coord ) );
             this.odometer.increment( coord );
         }
+    }
+    rank() {
+        return this.odometer.bases.length;
+    }
+    specification( invert = false ) {
+        return invert
+            ? [...this.odometer.bases].reverse().join('x')
+            : this.odometer.bases.join('x');
+    }
+
+    placeValues( invert = false ) {
+        return (invert
+            ? [...this.permBox[0].placeValues]
+            :  [...this.permBox[1].placeValues]
+        ).reverse().join( ', ' );
+    }
+
+    placeValuesStructure( invert = false ) {
+        const bases = invert
+            ? [...this.odometer.bases].reverse()
+            : [...this.odometer.bases];
+        return bases.map( ( b, i ) => ( i + 1 ) == bases.length ? '1' : bases.slice( i + 1 ).join( 'x' ) ).join( ', ' );
+    }
+
+    diagonal() {
+        return [ this[0], this[this.length - 1]];
     }
 }
 
