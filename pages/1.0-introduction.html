@@ -1,6 +1,12 @@
 <script>
-    pageScope.bases = [5,3];
+    if (urlParam.has('boxSpec')) {
+        pageScope.bases = urlParam.get('boxSpec').split('x').map( d => Number(d));
+    } else {
+        pageScope.bases = [7,4];
+    }
     pageScope.box = Box.of( pageScope.bases );
+
+    // TODO: fix inverse mixed up in tables/cycles etc.
 </script>
 
 <h2>Introduction</h2>
@@ -50,8 +56,8 @@ and the scalar product of the place values with each coordinate produces the cor
 
 
 For example, the box specification <a class="eval" title="pageScope.box.specification()"></a>
-has the place values structure [ <a class="eval" title="pageScope.box.placeValuesStructure()"></a> ]
-which evaluates to [ <a class="eval" title="pageScope.box.placeValues()"></a> ],
+has the place values structure | <a class="eval" title="pageScope.box.placeValuesStructure().join(' | ')"></a> |
+<!--which evaluates to [ <a class="eval" title="pageScope.box.placeValues()"></a> ],-->
 and produces the following coordinates and index numbers:
 <br/>
 <br/>
@@ -59,8 +65,8 @@ and produces the following coordinates and index numbers:
 <br/>
 
 However, the reverse box specification <a class="eval" title="pageScope.box.specification( true )"></a>
-has the place values structure [ <a class="eval" title="pageScope.box.placeValuesStructure( invert = true )"></a> ]
-which evaluates to [ <a class="eval" title="pageScope.box.placeValues( invert = true )"></a> ],
+has the place values structure | <a class="eval" title="pageScope.box.placeValuesStructure( invert = true ).join(' | ')"></a> |
+<!--which evaluates to [ <a class="eval" title="pageScope.box.placeValues( invert = true )"></a> ],-->
 and produces the following, partially different, coordinates and index numbers:
 <br/>
 <br/>
@@ -96,13 +102,13 @@ Specifically:
     pageScope.cycles = CyclesExpression.evaluate( pageScope.bases.join( ':' ) )[0];
     pageScope.cyclesInverse = CyclesExpression.evaluate( [...pageScope.bases].reverse().join( ':' ) )[0];
 
-    pageScope.cycleOrbitsArrowNotation = pageScope.cycles
+    pageScope.cycleOrbitsArrowNotation = pageScope.cyclesInverse
         .orbits()
         .map( cycle => [ cycle.map( ( c, i ) => `${ c }${ i + 1 == cycle.length ? ' &rarr; 1' : ' &rarr; ' + cycle[ i + 1 ] + ' | ' }` ).join( '' ), cycle.length ] )
         .map( ( [x, l], i ) => `<li>${ i == 0 ? 'A' : 'Another' } cycle of length ${ l }:<br/><br/>${ x }</li>` )
         .flatMap( cycle => cycle )
         .join( '' );
-    pageScope.cycleIdentitiesArrowNotation = '<li>Cycles of length 1, or fixed points:<br/><br/>' + pageScope.cycles
+    pageScope.cycleIdentitiesArrowNotation = '<li>Cycles of length 1, or fixed points:<br/><br/>' + pageScope.cyclesInverse
         .identities()
         .map( cycle => cycle.map( c => `${ c } &rarr; ${ c }` ) )
         .join( ' | ' ) + '</li>';
@@ -114,7 +120,7 @@ Specifically:
 This is written more succinctly as an expression in cycle notation:
 <br/>
 <br/>
-<span class="eval" title="pageScope.cycles
+<span class="eval" title="pageScope.cyclesInverse
             .map( cycle => `( ${ cycle.join( ' ' ) } )` )
             .join( ' ' )"></span>
 <br/>
@@ -122,6 +128,9 @@ This is written more succinctly as an expression in cycle notation:
 
 NB: Here it's useful to retain the fixed points in the expression, even though they are usually elided,
 so that the entire set of points is presented.
+<br/>
+<br/>
+This cycle structure is captured in a monomial expression: <b class="evalNode" title="pageScope.cycles.htmlMonomial()"></b>
 <br/>
 <br/>
 
@@ -132,14 +141,14 @@ A cycles expression can be plotted as a radiance diagram:
 <br/>
 <br/>
 
-Swapping the two specifications in the comparison produces the same cycles in reverse:
+Swapping the two specifications in the comparison produces the same cycles in reverse (hence they share the same monomial structure):
 <br/>
 <br/>
 <span class="evalNode" title="pageScope.box.compareBoxSpecificationsTable( invert = true )"></span>
 <br/>
 
 <span class="eval" title="pageScope
-            .cyclesInverse
+            .cycles
             .map( cycle => `( ${ cycle.join( ' ' ) } )` )
             .join( ' ' )"></span>
 <br/>

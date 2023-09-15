@@ -26,7 +26,6 @@ const arrayReverseCompare = (a, b) => {
     }
     return 0;
 };
-
 function rotateArray( array, times = 1 ) {
     if ( times < 0 ) {
         return rotateReverseArray( array, -1 * times );
