@@ -6,9 +6,26 @@ body {
 :root {
   --eval-color: rgb(175, 225, 175);
   --puce-color: rgb(173, 216, 230);
+  --menu-bg-color: rgb(200, 216, 230);
+  --menu-fg-color: rgb(100, 108, 115);
 }
 
 a.def, a.def:hover, a.def:focus, a.def:active { text-decoration: none; color: inherit; }
+
+
+a.menu {
+    font-size: 80%;
+    color: black;
+    padding: 4px;
+    margin: 4px;
+    border-radius: 3px;
+    border: 1px solid var(--menu-fg-color);
+}
+a.selected {
+    background: var(--menu-bg-color);
+}
+
+
 
 textarea.expression {
     width: 100%;
@@ -85,7 +102,6 @@ tr.polynomials { background: white; }
     border-radius: 3px;
     border: 1px solid black;
 }
-
 
 .cycles-text {
     font-size: 80%;

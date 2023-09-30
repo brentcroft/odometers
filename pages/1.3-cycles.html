@@ -1,0 +1,86 @@
+<script>
+    if (urlParam.has('boxSpec')) {
+        pageScope.bases = urlParam.get('boxSpec').split('x').map( d => Number(d));
+    } else {
+        pageScope.bases = [5,3];
+    }
+    pageScope.box = Box.of( pageScope.bases );
+
+    // TODO: fix inverse mixed up in tables/cycles etc.
+</script>
+
+<h3>Index Comparison: Permutations and Cycles</h3>
+
+The index numbers for corresponding coordinates, for any two specifications from the same box, can be compared:
+<br/>
+<br/>
+<span class="evalNode" title="pageScope.box.compareBoxSpecificationsTable()"></span>
+<br/>
+
+The second row is a permutation of the first row and this maps all the points in the box back onto all the points in the box.
+This is an action of the box, it moves points around inside the box.
+<br/>
+<br/>
+
+Specifically:
+<script>
+    pageScope.cycles = CyclesExpression.evaluate( pageScope.bases.join( ':' ) )[0];
+    pageScope.cyclesInverse = CyclesExpression.evaluate( [...pageScope.bases].reverse().join( ':' ) )[0];
+
+    pageScope.cycleOrbitsArrowNotation = pageScope.cyclesInverse
+        .orbits()
+        .map( cycle => [ cycle.map( ( c, i ) => `${ c }${ i + 1 == cycle.length ? ' &rarr; 1' : ' &rarr; ' + cycle[ i + 1 ] + ' | ' }` ).join( '' ), cycle.length ] )
+        .map( ( [x, l], i ) => `<li>${ i == 0 ? 'A' : 'Another' } cycle of length ${ l }:<br/><br/>${ x }</li>` )
+        .flatMap( cycle => cycle )
+        .join( '' );
+    pageScope.cycleIdentitiesArrowNotation = '<li>Cycles of length 1, or fixed points:<br/><br/>' + pageScope.cyclesInverse
+        .identities()
+        .map( cycle => cycle.map( c => `${ c } &rarr; ${ c }` ) )
+        .join( ' | ' ) + '</li>';
+</script>
+
+<ul class="eval" title="[ pageScope.cycleOrbitsArrowNotation, pageScope.cycleIdentitiesArrowNotation ].join( '' )"></ul>
+
+
+This is written more succinctly as an expression in cycle notation:
+<br/>
+<br/>
+<span class="eval" title="pageScope.cyclesInverse
+            .map( cycle => `( ${ cycle.join( ' ' ) } )` )
+            .join( ' ' )"></span>
+<br/>
+<br/>
+
+NB: Here it's useful to retain the fixed points in the expression, even though they are usually elided,
+so that the entire set of points is presented.
+<br/>
+<br/>
+This cycle structure is captured in a monomial expression: <b class="evalNode" title="pageScope.cycles.htmlMonomial()"></b>
+<br/>
+<br/>
+
+<hr class="pagebreak"/>
+
+A cycles expression can be plotted as a radiance diagram:
+<div class="evalNode" title="pageScope.cycles.x3dCycles()"></div>
+<br/>
+<br/>
+
+Swapping the two specifications in the comparison produces the same cycles in reverse (hence they share the same monomial structure):
+<br/>
+<br/>
+<span class="evalNode" title="pageScope.box.compareBoxSpecificationsTable( invert = true )"></span>
+<br/>
+
+<span class="eval" title="pageScope
+            .cycles
+            .map( cycle => `( ${ cycle.join( ' ' ) } )` )
+            .join( ' ' )"></span>
+<br/>
+<div class="evalNode" title="pageScope.cyclesInverse.x3dCycles()"></div>
+<br/>
+<br/>
+
+Comparing a specification with itself always produces a set of fixed points only.
+<br/>
+<br/>

@@ -38,23 +38,30 @@
     <script type="text/javascript" src="js/pagery.js"></script>
 
     <script>
-        var pageRefs = {
-            'page-1-0': 'pages/1.0-introduction.html',
-        };
+        const pageRefs = [
+            { 'introduction': 'pages/1.0-introduction.html' },
+            { 'indexes': 'pages/1.1-indexes.html' },
+            { 'place-values': 'pages/1.2-place-values.html' },
+            { 'cycles': 'pages/1.3-cycles.html' },
+        ];
     </script>
 </head>
 
-<body onload="includePages( 'pages', 'errors', pageRefs )" class="smallish">
+<body onload="includePages( 'pages', 'errors', pageRefs[0], 'menu', pageRefs )" class="Xsmallish">
     <div class="menu noprint">
         <a href=".." title="Brentcroft">brentcroft</a>
         |
         <a href="index.html" title="Thinking inside the box">doc</a>
-        <a href="odometer.html" title="Odometer">odometer</a>
+        |
+        <a href="odometer.html" target="_blank" title="Odometer">odometer</a>
     </div>
 
     <div id="errors"></div>
 
     <h1>Thinking inside the Box</h1>
+
+    <div id="menu" class="menu noprint"></div>
+
 <!--    <div>-->
 <!--        Alaric Dobson, 2023-09-14<br/>-->
 <!--        alaric@brentcroft.com-->

@@ -35,9 +35,9 @@ class AbstractBox extends Array {
         return this.odometer.bases.length;
     }
     specification( invert = false ) {
-        return invert
+        return [ '"', invert
             ? [...this.odometer.bases].reverse().join('x')
-            : this.odometer.bases.join('x');
+            : this.odometer.bases.join('x'), '"' ].join('');
     }
     placeValuesStructure( invert = false ) {
         const bases = invert

@@ -7,7 +7,7 @@ Box.prototype.explanation = function(invert = false) {
 Box.prototype.packingTable = function( invert = false ) {
     const cellFn = ( coord, serial ) => `${ serial }<sub>(${ coord.join( ',' ) })</sub>`;
     const bases = invert ? [...this.odometer.bases].reverse() : [...this.odometer.bases];
-    const caption = `Box specification: ${ bases.join( 'x' ) }`;
+    const caption = `Box specification: ${ this.specification( invert ) }`;
     const rank = this.rank();
     var pointIndex = 0;
     const _walkBases = ( inverted = false, place = 0, locusStack = [] ) => {

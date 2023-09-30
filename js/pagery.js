@@ -1,10 +1,54 @@
-function includePages( pagesElementId, errorElementId, pages ) {
+function includeMenu( menuElementId, pages, pageKey ) {
+    const menuElement = document.getElementById( menuElementId );
+    if (!menuElement) {
+        throw new Error( `No such menu element: ${ menuElementId }` );
+    }
+    menuElement.innerHTML = '';
+    pages
+        .forEach( (page, pageNo) => {
+            const [ id ] = Object.keys( page );
+
+            const cssClass = (id == pageKey)
+                ? [ 'menu', 'selected' ]
+                : [ 'menu' ];
+
+            const entryElement = reify(
+                "a",
+                { class: cssClass },
+                [ reifyText( `${ pageNo + 1 } ${ id }` ) ],
+                [
+                    c => c.onclick = ( event ) => includePages( 'pages', 'errors', page, menuElementId, pages )
+                ]
+            );
+            menuElement.appendChild( entryElement );
+        } );
+}
+
+function includePages( pagesElementId, errorElementId, page, menuElementId, pages ) {
     const pagesElement = document.getElementById( pagesElementId );
+    if (!pagesElement) {
+        throw new Error( `No such page element: ${ pagesElementId }` );
+    }
+    pagesElement.innerHTML = '';
+
     const errorElement = document.getElementById( errorElementId );
-    const tally = Object.keys( pages );
+    if (!errorElement) {
+        throw new Error( `No such error element: ${ errorElementId }` );
+    }
+    errorElement.innerHTML = '';
+
+    if (!page) {
+        throw new Error( 'page is empty' );
+    }
+    const tally = Object.keys( page );
     const urlParam = new URLSearchParams( window.location.search );
+
+    if (menuElementId) {
+        includeMenu( menuElementId, pages, tally[0] );
+    }
+
     Object
-        .entries( pages )
+        .entries( page )
         .forEach( entry => {
             const [ id, src ] = entry;
 
